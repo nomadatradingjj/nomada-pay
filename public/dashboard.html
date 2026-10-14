@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orbit Pay - Dashboard B2B</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .glass-card {
+      background: rgba(24, 24, 27, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(39, 39, 42, 0.8);
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased">
+
+  <!-- Navbar Superior -->
+  <header class="border-b border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-amber-500/10 text-amber-500 p-2 rounded-xl border border-amber-500/20">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+          </svg>
+        </div>
+        <span class="font-extrabold text-lg tracking-wider bg-gradient-to-r from-zinc-100 via-zinc-200 to-amber-500 bg-clip-text text-transparent">Orbit <span class="text-amber-500 font-semibold">PAY</span></span>
+        <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-0.5 rounded-full border border-zinc-700 font-mono">B2B Dashboard</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="btnRefresh" class="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3.5 py-2 rounded-xl border border-zinc-700 transition cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          Actualizar Datos
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
+    
+    <!-- Encabezado -->
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Métricas & Flujo de Caja</h1>
+      <p class="text-sm text-zinc-400 mt-1">Resumen en vivo de transacciones procesadas en Supabase.</p>
+    </div>
+
+    <!-- Tarjetas KPI -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Total ARS (Aprobados) -->
+      <div class="glass-card p-5 rounded-2xl">
+        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Acreditado (Pesos)</div>
+        <div id="statMontoARS" class="text-2xl font-black text-white">\$0,00 ARS</div>
+        <div class="mt-2 flex items-center gap-1.5 text-[11px] text-blue-400 font-medium">
+          <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+          Mercado Pago (Aprobados)
+        </div>
+      </div>
+
+      <!-- Total USDT (Aprobados) -->
+      <div class="glass-card p-5 rounded-2xl">
+        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Acreditado (USDT)</div>
+        <div id="statMontoUSDT" class="text-2xl font-black text-amber-400">0.00 USDT</div>
+        <div class="mt-2 flex items-center gap-1.5 text-[11px] text-amber-400 font-medium">
+          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+          Cripto Verificados
+        </div>
+      </div>
+
+      <!-- Comisiones Pasarela -->
+      <div class="glass-card p-5 rounded-2xl">
+        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Comisiones Retenidas</div>
+        <div id="statComisiones" class="text-2xl font-black text-emerald-400">\$0,00 ARS</div>
+        <div class="mt-2 text-[11px] text-zinc-500">Comisión ganada (1.5%)</div>
+      </div>
+
+      <!-- Total Operaciones -->
+      <div class="glass-card p-5 rounded-2xl">
+        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Ventas Totales</div>
+        <div id="statTotalVentas" class="text-2xl font-black text-white">0</div>
+        <div class="mt-2 text-[11px] text-zinc-500">Operaciones en historial</div>
+      </div>
+
+    </div>
+
+    <!-- Tabla de Transacciones -->
+    <div class="glass-card rounded-2xl p-6 border border-zinc-800">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-white">Historial de Transacciones</h2>
+          <p class="text-xs text-zinc-400">Panel de verificación y gestión de pagos</p>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="flex items-center gap-2 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
+          <button onclick="filtrarTabla('todas')" class="px-3 py-1.5 rounded-lg font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition">Todas</button>
+          <button onclick="filtrarTabla('mercadopago')" class="px-3 py-1.5 rounded-lg font-medium text-blue-400 hover:bg-zinc-800 transition">Mercado Pago</button>
+          <button onclick="filtrarTabla('binance')" class="px-3 py-1.5 rounded-lg font-medium text-amber-400 hover:bg-zinc-800 transition">Binance / USDT</button>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-zinc-300">
+          <thead class="text-xs uppercase bg-zinc-950/80 text-zinc-400 border-b border-zinc-800">
+            <tr>
+              <th class="py-3 px-4 font-semibold">Fecha</th>
+              <th class="py-3 px-4 font-semibold">Concepto</th>
+              <th class="py-3 px-4 font-semibold">Pasarela / Hash</th>
+              <th class="py-3 px-4 font-semibold">Monto</th>
+              <th class="py-3 px-4 font-semibold">Estado</th>
+              <th class="py-3 px-4 font-semibold text-right">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tablaCuerpo" class="divide-y divide-zinc-800/60">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-zinc-500">Cargando transacciones desde Supabase...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let transaccionesTotales = [];
+
+    async function obtenerTransacciones() {
+      const cuerpo = document.getElementById('tablaCuerpo');
+      
+      try {
+        const res = await fetch('/api/historial-transacciones');
+        if (!res.ok) throw new Error("Error al consultar la API");
+
+        transaccionesTotales = await res.json();
+        renderizarTabla(transaccionesTotales);
+      } catch (err) {
+        console.error("Error al cargar historial:", err);
+        cuerpo.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-8 text-zinc-500">
+              No hay ventas registradas o hubo un error de conexión.<br>
+              Generá una prueba desde <a href="/prueba.html" class="text-amber-400 underline font-semibold">prueba.html</a>
+            </td>
+          </tr>`;
+      }
+    }
+
+    function filtrarTabla(pasarela) {
+      if (pasarela === 'todas') {
+        renderizarTabla(transaccionesTotales);
+      } else {
+        const filtradas = transaccionesTotales.filter(t => t.pasarela === pasarela);
+        renderizarTabla(filtradas);
+      }
+    }
+
+    async function cambiarEstado(id, nuevoEstado) {
+      if (!confirm(`¿Estás seguro de cambiar el estado de este pago a ${nuevoEstado.toUpperCase()}?`)) return;
+
+      try {
+        const res = await fetch('/api/cambiar-estado-transaccion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, estado: nuevoEstado })
+        });
+
+        const data = await res.json();
+        if (data.status === 'success') {
+          obtenerTransacciones(); // Recargar datos
+        } else {
+          alert('Error al actualizar estado');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error de conexión');
+      }
+    }
+
+    function renderizarTabla(lista) {
+      const cuerpo = document.getElementById('tablaCuerpo');
+      
+      if (!lista || lista.length === 0) {
+        cuerpo.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-8 text-zinc-500">No hay transacciones registradas.</td>
+          </tr>`;
+        
+        document.getElementById('statMontoARS').innerText = '\$0,00 ARS';
+        document.getElementById('statMontoUSDT').innerText = '0.00 USDT';
+        document.getElementById('statComisiones').innerText = '\$0,00 ARS';
+        document.getElementById('statTotalVentas').innerText = '0';
+        return;
+      }
+
+      let totalARS = 0;
+      let totalUSDT = 0;
+      let totalComisiones = 0;
+
+      cuerpo.innerHTML = lista.map(tx => {
+        const fecha = new Date(tx.created_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+        const esCripto = tx.pasarela === 'binance';
+        const esAprobado = tx.estado === 'approved';
+
+        // Solo sumamos los importes que estén APROBADOS
+        if (esAprobado) {
+          if (esCripto) {
+            totalUSDT += Number(tx.monto || 0);
+          } else {
+            totalARS += Number(tx.monto || 0);
+            totalComisiones += Number(tx.comision || 0);
+          }
+        }
+
+        const badgePasarela = esCripto 
+          ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-semibold">Binance USDT</span>`
+          : `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-lg text-xs font-semibold">Mercado Pago</span>`;
+
+        const badgeEstado = esAprobado
+          ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-md text-xs font-semibold">Aprobado</span>`
+          : tx.estado === 'rejected'
+          ? `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-md text-xs font-semibold">Rechazado</span>`
+          : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-md text-xs font-semibold animate-pulse">Pendiente</span>`;
+
+        // Columna de Hash/TxID o ID de preferencia
+        let detalleHash = '';
+        if (tx.payment_id) {
+          const hashCorto = tx.payment_id.length > 16 ? tx.payment_id.substring(0, 10) + '...' : tx.payment_id;
+          const urlExplorer = tx.titulo.includes('TRC') 
+            ? `https://tronscan.org/#/transaction/${tx.payment_id}`
+            : `https://bscscan.com/tx/${tx.payment_id}`;
+
+          detalleHash = `<div class="mt-1 text-[11px] font-mono text-zinc-400 flex items-center gap-1">
+            TxID: <a href="${urlExplorer}" target="_blank" class="text-amber-400 underline hover:text-amber-300">${hashCorto} ↗</a>
+          </div>`;
+        }
+
+        // Botones de acción
+        let acciones = '';
+        if (!esAprobado) {
+          acciones = `
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="cambiarEstado('${tx.id}', 'approved')" class="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">
+                Aprobar
+              </button>
+              <button onclick="cambiarEstado('${tx.id}', 'rejected')" class="bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-zinc-700 hover:border-red-500/40 text-xs font-medium px-2.5 py-1.5 rounded-lg transition cursor-pointer">
+                X
+              </button>
+            </div>
+          `;
+        } else {
+          acciones = `<span class="text-xs text-zinc-500 font-medium">Verificado</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-zinc-900/50 transition">
+            <td class="py-3.5 px-4 text-xs font-mono text-zinc-400">${fecha}</td>
+            <td class="py-3.5 px-4 font-semibold text-white">${tx.titulo}</td>
+            <td class="py-3.5 px-4">${badgePasarela}${detalleHash}</td>
+            <td class="py-3.5 px-4 font-bold text-zinc-100">${esCripto ? tx.monto + ' USDT' : '$' + Number(tx.monto).toLocaleString('es-AR') + ' ARS'}</td>
+            <td class="py-3.5 px-4">${badgeEstado}</td>
+            <td class="py-3.5 px-4 text-right">${acciones}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Actualizar tarjetas de métricas
+      document.getElementById('statMontoARS').innerText = '\$' + totalARS.toLocaleString('es-AR') + ' ARS';
+      document.getElementById('statMontoUSDT').innerText = totalUSDT.toFixed(2) + ' USDT';
+      document.getElementById('statComisiones').innerText = '\$' + totalComisiones.toLocaleString('es-AR') + ' ARS';
+      document.getElementById('statTotalVentas').innerText = transaccionesTotales.length;
+    }
+
+    document.getElementById('btnRefresh').addEventListener('click', obtenerTransacciones);
+    window.addEventListener('DOMContentLoaded', obtenerTransacciones);
+  </script>
+</body>
+</html>

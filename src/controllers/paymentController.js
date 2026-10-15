@@ -1,28 +1,35 @@
-import { Preference } from 'mercadopago';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { mpClient } from '../config/mp.js';
 import { supabase } from '../config/supabase.js';
 
 export const crearCobro = async (req, res) => {
   try {
     const { titulo, precio, vendedorAccessToken, comisionPorcentaje = 0.015 } = req.body;
+    const precioNumerico = Number(precio);
 
-    if (!titulo || !precio) {
+    if (typeof titulo !== 'string' || !titulo.trim() || !Number.isFinite(precioNumerico) || precioNumerico <= 0) {
       return res.status(400).json({ error: 'Faltan campos obligatorios: titulo o precio' });
     }
 
-    const marketplaceFee = Math.round(Number(precio) * Number(comisionPorcentaje));
-    const preference = new Preference(mpClient);
+    const accessTokenVendedor = typeof vendedorAccessToken === 'string'
+      ? vendedorAccessToken.trim()
+      : '';
+    const marketplaceFee = Math.round(precioNumerico * Number(comisionPorcentaje));
+    const preferenceClient = accessTokenVendedor
+      ? new MercadoPagoConfig({ accessToken: accessTokenVendedor, options: mpClient.options })
+      : mpClient;
+    const preference = new Preference(preferenceClient);
 
     // 1. Configurar Webhook solo si es una URL HTTPS pública
-    const baseUrl = process.env.BASE_URL || 'https://nomada-pay.onrender.com';
-    const webhookUrl = process.env.WEBHOOK_URL || baseUrl;
-    const esUrlPublica = webhookUrl && webhookUrl.startsWith('https://');
+    const baseUrl = (process.env.BASE_URL || 'https://nomada-pay.onrender.com').replace(/\/+$/, '');
+    const webhookUrl = (process.env.WEBHOOK_URL || baseUrl).replace(/\/+$/, '');
+    const esUrlPublica = webhookUrl.startsWith('https://');
 
     const bodyData = {
       items: [
         {
-          title: titulo,
-          unit_price: Number(precio),
+          title: titulo.trim(),
+          unit_price: precioNumerico,
           quantity: 1,
           currency_id: 'ARS',
         },
@@ -37,24 +44,31 @@ export const crearCobro = async (req, res) => {
 
     // Solo agregar notification_url si tenemos una dirección HTTPS válida
     if (esUrlPublica) {
-      bodyData.notification_url = webhookUrl.includes('/api/webhooks/mercadopago') 
+      bodyData.notification_url = webhookUrl.includes('/api/webhooks/mercadopago')
         ? webhookUrl 
         : `${webhookUrl}/api/webhooks/mercadopago`;
     }
 
     // Solo agregar marketplace_fee si realmente viene un vendedor distinto por OAuth
-    if (vendedorAccessToken && marketplaceFee > 0) {
+    if (accessTokenVendedor && marketplaceFee > 0) {
       bodyData.marketplace_fee = marketplaceFee;
     }
 
-    const requestOptions = vendedorAccessToken ? { accessToken: vendedorAccessToken } : {};
-    const response = await preference.create({ body: bodyData, requestOptions });
+    const response = await preference.create({ body: bodyData });
+    console.log('Respuesta de Mercado Pago:', response);
 
     // Detectar automáticamente si estamos en entorno de prueba o producción
-    const esTokenPrueba = process.env.MP_ACCESS_TOKEN?.startsWith('TEST-');
-    const urlFinal = (esTokenPrueba && response.sandbox_init_point) 
-      ? response.sandbox_init_point 
-      : response.init_point;
+    const tokenUsado = accessTokenVendedor || mpClient.accessToken || '';
+    const esTokenPrueba = Boolean(
+      process.env.MP_ACCESS_TOKEN?.trim().startsWith('TEST-') || tokenUsado.startsWith('TEST-')
+    );
+    const urlFinal = esTokenPrueba ? response.sandbox_init_point : response.init_point;
+
+    if (!response.id || !urlFinal) {
+      throw new Error(esTokenPrueba
+        ? 'Mercado Pago no devolvió sandbox_init_point para el token de prueba'
+        : 'Mercado Pago no devolvió init_point para el checkout');
+    }
 
     // 2. Registro de la transacción en Supabase
     try {
@@ -63,8 +77,8 @@ export const crearCobro = async (req, res) => {
         .insert([
           {
             preference_id: response.id,
-            titulo: titulo,
-            monto: Number(precio),
+            titulo: titulo.trim(),
+            monto: precioNumerico,
             comision: marketplaceFee,
             estado: 'pending',
             pasarela: 'mercadopago'
@@ -84,8 +98,8 @@ export const crearCobro = async (req, res) => {
     return res.json({
       status: 'success',
       id: response.id,
-      init_point: urlFinal, // Devuelve el enlace correcto según el token
-      sandbox_init_point: response.sandbox_init_point,
+      init_point: urlFinal,
+      ...(esTokenPrueba && { sandbox_init_point: response.sandbox_init_point }),
       comision_calculada: marketplaceFee
     });
 

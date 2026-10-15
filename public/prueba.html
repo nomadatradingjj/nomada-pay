@@ -291,16 +291,24 @@
         });
 
         const data = await res.json();
-        if (data.init_point) {
-          window.location.href = data.sandbox_init_point || data.init_point;
-        } else {
-          alert('Error al generar cobro');
-          btn.disabled = false;
-          btn.innerHTML = originalText;
+        if (!res.ok) {
+          throw new Error(data.detalles || data.error || 'Error al generar cobro');
         }
+
+        const checkoutUrl = data.sandbox_init_point || data.init_point;
+        if (typeof checkoutUrl !== 'string' || !checkoutUrl) {
+          throw new Error('Mercado Pago no devolvió una URL de checkout');
+        }
+
+        const parsedCheckoutUrl = new URL(checkoutUrl);
+        if (parsedCheckoutUrl.protocol !== 'https:') {
+          throw new Error('La URL de checkout de Mercado Pago no es segura');
+        }
+
+        window.location.assign(parsedCheckoutUrl.href);
       } catch (err) {
         console.error(err);
-        alert('Hubo un error de conexión');
+        alert(err instanceof Error ? err.message : 'Hubo un error de conexión');
         btn.disabled = false;
         btn.innerHTML = originalText;
       }

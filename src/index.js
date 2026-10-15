@@ -15,7 +15,7 @@ app.use(express.static('public')); // <--- ESTA LÍNEA DEBE ESTAR AQUÍ
 app.use('/api', apiRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ mensaje: '🚀 Servidor de Pasarela Nómada Activo' });
+  res.json({ mensaje: '🚀 Servidor de Pasarela Orbit Pay Activo' });
 });
 
 app.listen(PORT, () => {

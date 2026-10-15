@@ -13,8 +13,9 @@ export const crearCobro = async (req, res) => {
     const marketplaceFee = Math.round(Number(precio) * Number(comisionPorcentaje));
     const preference = new Preference(mpClient);
 
-    // 1. Configurar Webhook solo si es una URL HTTPS pública (Ngrok / Localtunnel o Producción)
-    const webhookUrl = process.env.WEBHOOK_URL || process.env.BASE_URL;
+    // 1. Configurar Webhook solo si es una URL HTTPS pública
+    const baseUrl = process.env.BASE_URL || 'https://nomada-pay.onrender.com';
+    const webhookUrl = process.env.WEBHOOK_URL || baseUrl;
     const esUrlPublica = webhookUrl && webhookUrl.startsWith('https://');
 
     const bodyData = {
@@ -27,10 +28,11 @@ export const crearCobro = async (req, res) => {
         },
       ],
       back_urls: {
-        success: `${process.env.BASE_URL || 'http://localhost:3000'}/prueba.html?status=success`,
-        failure: `${process.env.BASE_URL || 'http://localhost:3000'}/prueba.html?status=failure`,
-        pending: `${process.env.BASE_URL || 'http://localhost:3000'}/prueba.html?status=pending`,
+        success: `${baseUrl}/prueba.html?status=success`,
+        failure: `${baseUrl}/prueba.html?status=failure`,
+        pending: `${baseUrl}/prueba.html?status=pending`,
       },
+      auto_return: 'approved',
     };
 
     // Solo agregar notification_url si tenemos una dirección HTTPS válida
@@ -47,6 +49,12 @@ export const crearCobro = async (req, res) => {
 
     const requestOptions = vendedorAccessToken ? { accessToken: vendedorAccessToken } : {};
     const response = await preference.create({ body: bodyData, requestOptions });
+
+    // Detectar automáticamente si estamos en entorno de prueba o producción
+    const esTokenPrueba = process.env.MP_ACCESS_TOKEN?.startsWith('TEST-');
+    const urlFinal = (esTokenPrueba && response.sandbox_init_point) 
+      ? response.sandbox_init_point 
+      : response.init_point;
 
     // 2. Registro de la transacción en Supabase
     try {
@@ -76,7 +84,7 @@ export const crearCobro = async (req, res) => {
     return res.json({
       status: 'success',
       id: response.id,
-      init_point: response.init_point,
+      init_point: urlFinal, // Devuelve el enlace correcto según el token
       sandbox_init_point: response.sandbox_init_point,
       comision_calculada: marketplaceFee
     });

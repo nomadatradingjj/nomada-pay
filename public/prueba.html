@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orbit Pay - Checkout Seguro</title>
+  <title>Nómada Store - Checkout Seguro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,20 +15,20 @@
       content: '';
       position: absolute;
       inset: -1px;
-      background: linear-gradient(135deg, rgba(59,130,246,0.3), rgba(245,158,11,0.2), rgba(59,130,246,0.05));
+      background: linear-gradient(135deg, rgba(212,175,55,0.24), rgba(212,175,55,0.08), rgba(212,175,55,0.18));
       border-radius: 1.5rem;
       z-index: -1;
       pointer-events: none;
     }
   </style>
 </head>
-<body class="bg-gradient-to-br from-zinc-950 via-neutral-900 to-zinc-950 text-zinc-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+<body class="bg-[#09090B] text-zinc-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
   
-  <div class="absolute top-0 -left-48 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-  <div class="absolute bottom-0 -right-48 w-96 h-96 bg-amber-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="absolute top-0 -left-48 w-96 h-96 bg-[#D4AF37]/[0.06] rounded-full blur-[120px] pointer-events-none"></div>
+  <div class="absolute bottom-0 -right-48 w-96 h-96 bg-[#D4AF37]/[0.04] rounded-full blur-[120px] pointer-events-none"></div>
 
   <!-- Contenedor Principal -->
-  <div class="glow-border bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl shadow-black/80 z-10">
+  <div class="glow-border bg-zinc-900/60 backdrop-blur-xl border border-[#D4AF37]/20 rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl shadow-black/80 z-10">
     
     <!-- Header -->
     <div class="flex items-center justify-between border-b border-zinc-800/80 pb-5 mb-6 gap-2">
@@ -38,7 +38,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
           </svg>
         </div>
-        <span class="font-extrabold text-lg tracking-wider bg-gradient-to-r from-zinc-100 via-zinc-200 to-amber-500 bg-clip-text text-transparent">Orbit <span class="text-amber-500 font-semibold">PAY</span></span>
+        <span class="font-extrabold text-lg tracking-wider text-white">NÓMADA <span class="text-[#D4AF37] font-semibold">STORE</span></span>
       </div>
 
       <div class="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-3 py-1.5 rounded-full font-medium shrink-0">
@@ -50,60 +50,70 @@
     </div>
 
     <!-- Detalle de Producto -->
-    <div class="space-y-1 mb-6">
-      <span class="text-zinc-400 text-xs font-semibold uppercase tracking-widest">Estás adquiriendo</span>
-      <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-white">Suscripción Trading VIP</h2>
-      
-      <div class="flex items-baseline gap-2 pt-2">
-        <span class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">\$15.000,00 ARS</span>
-        <span class="text-xs font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md border border-zinc-700">o 15.00 USDT</span>
-      </div>
-    </div>
-
-    <!-- Desglose de Pago -->
-    <div class="bg-zinc-950/45 rounded-2xl border border-zinc-800/60 p-4 space-y-3 mb-8">
-      <div class="flex justify-between text-sm">
-        <span class="text-zinc-400">Subtotal</span>
-        <span class="font-medium text-zinc-200">\$15.000,00 ARS / 15 USDT</span>
-      </div>
-      <div class="flex justify-between text-sm pb-3 border-b border-zinc-800/50">
-        <span class="text-zinc-400">Comisión de pasarela</span>
-        <span class="font-medium text-emerald-500">\$0,00 ARS</span>
-      </div>
-      <div class="flex justify-between items-baseline pt-1">
-        <span class="text-sm font-semibold text-white">Total a pagar:</span>
-        <span class="text-xl font-bold text-white">\$15.000,00 ARS</span>
-      </div>
-    </div>
-
-    <!-- Botones de Pago -->
-    <div class="space-y-3">
-      <!-- Mercado Pago -->
-      <button id="btnPagar" class="group relative w-full bg-gradient-to-r from-blue-600 to-sky-500 text-white font-bold py-4 px-6 rounded-2xl shadow-lg border-t border-white/20 flex items-center justify-between transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
-        <div class="flex items-center gap-3">
-          <img src="/images/mercadopago.png" alt="Mercado Pago" class="h-6 w-auto object-contain shrink-0 filter brightness-200 contrast-200" onerror="this.src='https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.21.22/mercadopago/logo__small.png'" />
-          <div class="text-left">
-            <span class="block text-[10px] text-blue-100 uppercase tracking-widest font-medium">Pago en Pesos</span>
-            <span class="text-sm sm:text-base tracking-wide font-extrabold">Pagar con Mercado Pago</span>
-          </div>
+    <div id="checkoutContent">
+      <div class="space-y-1 mb-6">
+        <span class="text-zinc-400 text-xs font-semibold uppercase tracking-widest">Estás adquiriendo</span>
+        <h2 id="productTitle" class="text-xl sm:text-2xl font-bold tracking-tight text-white">Suscripción Trading VIP</h2>
+        <div class="flex items-baseline gap-2 pt-2">
+          <span id="productPrice" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">\$15.000,00 ARS</span>
+          <span id="productUsdPrice" class="text-xs font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md border border-zinc-700">o 15.00 USDT</span>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 shrink-0">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+      </div>
+
+      <div class="bg-zinc-950/45 rounded-2xl border border-zinc-800/60 p-4 space-y-3 mb-8">
+        <div class="flex justify-between text-sm">
+          <span class="text-zinc-400">Subtotal</span>
+          <span id="checkoutSubtotal" class="font-medium text-zinc-200">\$15.000,00 ARS / 15 USDT</span>
+        </div>
+        <div class="flex justify-between text-sm pb-3 border-b border-zinc-800/50">
+          <span class="text-zinc-400">Comisión de pasarela</span>
+          <span class="font-medium text-emerald-500">\$0,00 ARS</span>
+        </div>
+        <div class="flex justify-between items-baseline pt-1">
+          <span class="text-sm font-semibold text-white">Total a pagar:</span>
+          <span id="checkoutTotal" class="text-xl font-bold text-white">\$15.000,00 ARS</span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <button id="btnPagar" class="group relative w-full bg-gradient-to-r from-[#D4AF37] to-[#B99227] text-zinc-950 font-bold py-4 px-6 rounded-2xl shadow-lg border-t border-white/20 flex items-center justify-between transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
+          <div class="flex items-center gap-3">
+            <img src="/images/mercadopago.png" alt="Mercado Pago" class="h-6 w-auto object-contain shrink-0 filter brightness-200 contrast-200" onerror="this.src='https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.21.22/mercadopago/logo__small.png'" />
+            <div class="text-left">
+              <span class="block text-[10px] text-zinc-800 uppercase tracking-widest font-medium">Pago en Pesos</span>
+              <span class="text-sm sm:text-base tracking-wide font-extrabold">Pagar con Mercado Pago</span>
+            </div>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </button>
+
+        <button id="btnUSDT" class="group relative w-full bg-zinc-950/80 text-zinc-200 font-bold py-4 px-6 rounded-2xl border border-[#D4AF37]/40 flex items-center justify-between transition-all hover:border-[#D4AF37]/80 hover:bg-zinc-900 cursor-pointer">
+          <div class="flex items-center gap-3">
+            <img src="/images/binance.png" alt="USDT Cripto" class="w-7 h-7 object-contain shrink-0" onerror="this.src='https://cryptologos.cc/logos/tether-usdt-logo.png'" />
+            <div class="text-left">
+              <span class="block text-[9px] text-amber-400 uppercase tracking-widest font-bold">Pago en Criptomonedas</span>
+              <span class="text-sm sm:text-base tracking-wide font-extrabold text-white">Pagar con USDT (TRC20 / BEP20)</span>
+            </div>
+          </div>
+          <span class="text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-lg shrink-0">TRC20 / BEP20</span>
+        </button>
+      </div>
+    </div>
+
+    <section id="paymentResult" class="hidden rounded-2xl border border-[#D4AF37]/25 bg-zinc-950/60 p-5 text-center">
+      <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37]">
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
         </svg>
-      </button>
-
-      <!-- Botón Cripto USDT -->
-      <button id="btnUSDT" class="group relative w-full bg-zinc-950/80 text-zinc-200 font-bold py-4 px-6 rounded-2xl border border-amber-500/40 flex items-center justify-between transition-all hover:border-amber-500/80 hover:bg-zinc-900 cursor-pointer">
-        <div class="flex items-center gap-3">
-          <img src="/images/binance.png" alt="USDT Cripto" class="w-7 h-7 object-contain shrink-0" onerror="this.src='https://cryptologos.cc/logos/tether-usdt-logo.png'" />
-          <div class="text-left">
-            <span class="block text-[9px] text-amber-400 uppercase tracking-widest font-bold">Pago en Criptomonedas</span>
-            <span class="text-sm sm:text-base tracking-wide font-extrabold text-white">Pagar con USDT (TRC20 / BEP20)</span>
-          </div>
-        </div>
-        <span class="text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-lg shrink-0">TRC20 / BEP20</span>
-      </button>
-    </div>
+      </div>
+      <h2 id="paymentResultTitle" class="text-xl font-bold text-white">Pago aprobado</h2>
+      <p id="paymentResultMessage" class="mt-2 text-sm text-zinc-400">Estamos confirmando tu pago para preparar la descarga.</p>
+      <a id="downloadButton" class="mt-5 hidden w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B99227] px-5 py-3 font-bold text-zinc-950 transition hover:brightness-110" href="#" target="_blank" rel="noopener noreferrer" download>
+        Descargar Ebook
+      </a>
+    </section>
 
     <!-- Footers -->
     <div class="mt-8 pt-5 border-t border-zinc-800/80 flex flex-col items-center gap-3 text-center">
@@ -173,6 +183,77 @@
   <script>
     let walletsDisponibles = { trc20: '', bep20: '' };
     let redSeleccionada = 'trc20';
+    const queryParams = new URLSearchParams(window.location.search);
+    const productoId = queryParams.get('producto_id');
+    if (productoId) document.getElementById('btnUSDT').classList.add('hidden');
+
+    async function cargarProducto() {
+      if (!productoId) return;
+      try {
+        const response = await fetch(`/api/productos/${encodeURIComponent(productoId)}`);
+        const producto = await response.json();
+        if (!response.ok) throw new Error(producto.error || 'No se pudo cargar el producto');
+        document.getElementById('productTitle').textContent = producto.titulo;
+        const precioFormateado = new Intl.NumberFormat('es-AR', {
+          style: 'currency',
+          currency: 'ARS',
+        }).format(producto.precio_ars);
+        document.getElementById('productPrice').textContent = precioFormateado;
+        document.getElementById('checkoutSubtotal').textContent = `${precioFormateado} ARS`;
+        document.getElementById('checkoutTotal').textContent = `${precioFormateado} ARS`;
+        document.getElementById('productUsdPrice').classList.add('hidden');
+      } catch (error) {
+        console.error('Error al cargar el ebook:', error);
+      }
+    }
+
+    async function mostrarResultadoPago() {
+      const estado = queryParams.get('status') || queryParams.get('collection_status');
+      if (!['success', 'approved'].includes(estado)) return;
+
+      document.getElementById('checkoutContent').classList.add('hidden');
+      const result = document.getElementById('paymentResult');
+      result.classList.remove('hidden');
+
+      const paymentId = queryParams.get('payment_id') || queryParams.get('collection_id');
+      if (!paymentId) {
+        document.getElementById('paymentResultTitle').textContent = 'Pago recibido';
+        document.getElementById('paymentResultMessage').textContent =
+          'No encontramos el identificador del pago. Contactá a soporte para obtener tu ebook.';
+        return;
+      }
+
+      for (let intento = 0; intento < 12; intento += 1) {
+        try {
+          const response = await fetch(`/api/productos/descarga/${encodeURIComponent(paymentId)}`);
+          const data = await response.json();
+          if (response.ok && data.download_url) {
+            const link = document.getElementById('downloadButton');
+            link.href = data.download_url;
+            link.classList.remove('hidden');
+            link.classList.add('inline-flex');
+            document.getElementById('paymentResultMessage').textContent =
+              'Tu pago fue confirmado. El enlace seguro estará disponible durante 24 horas.';
+            return;
+          }
+          if (response.status !== 202) {
+            throw new Error(data.error || 'No fue posible verificar el pago');
+          }
+        } catch (error) {
+          document.getElementById('paymentResultTitle').textContent = 'No pudimos preparar la descarga';
+          document.getElementById('paymentResultMessage').textContent = error.message;
+          return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 2500));
+      }
+
+      document.getElementById('paymentResultTitle').textContent = 'Confirmando tu pago';
+      document.getElementById('paymentResultMessage').textContent =
+        'La confirmación puede tardar unos minutos. Recargá esta página para volver a intentar.';
+    }
+
+    cargarProducto();
+    mostrarResultadoPago();
 
     async function cargarBilleteras() {
       try {
@@ -286,7 +367,8 @@
           body: JSON.stringify({
             titulo: 'Suscripción Trading VIP',
             precio: 15000,
-            comisionPorcentaje: 0.015
+            comisionPorcentaje: 0.015,
+            ...(productoId && { producto_id: productoId })
           })
         });
 

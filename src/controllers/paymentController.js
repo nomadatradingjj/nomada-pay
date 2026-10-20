@@ -4,7 +4,28 @@ import { supabase } from '../config/supabase.js';
 
 export const crearCobro = async (req, res) => {
   try {
-    const { titulo, precio, vendedorAccessToken, comisionPorcentaje = 0.015 } = req.body;
+    const { producto_id: productoId, vendedorAccessToken, comisionPorcentaje = 0.015 } = req.body;
+    let { titulo, precio } = req.body;
+
+    if (productoId !== undefined) {
+      if (typeof productoId !== 'string' || !productoId.trim()) {
+        return res.status(400).json({ error: 'El identificador del producto no es válido' });
+      }
+
+      const { data: producto, error: productoError } = await supabase
+        .from('productos')
+        .select('titulo, precio_ars')
+        .eq('id', productoId.trim())
+        .single();
+
+      if (productoError || !producto) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
+
+      titulo = producto.titulo;
+      precio = producto.precio_ars;
+    }
+
     const precioNumerico = Number(precio);
 
     if (typeof titulo !== 'string' || !titulo.trim() || !Number.isFinite(precioNumerico) || precioNumerico <= 0) {
@@ -40,6 +61,7 @@ export const crearCobro = async (req, res) => {
         pending: `${baseUrl}/prueba.html?status=pending`,
       },
       auto_return: 'approved',
+      ...(productoId !== undefined && { external_reference: productoId.trim() }),
     };
 
     // Solo agregar notification_url si tenemos una dirección HTTPS válida

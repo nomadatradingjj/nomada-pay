@@ -1,5 +1,6 @@
 import { Payment } from 'mercadopago';
 import { mpClient } from '../config/mp.js';
+import { supabase } from '../config/supabase.js';
 
 export const recibirWebhookMP = async (req, res) => {
   try {
@@ -20,6 +21,24 @@ export const recibirWebhookMP = async (req, res) => {
 
         if (paymentData.status === 'approved') {
           console.log('✅ Pago APROBADO: Actualizando inventario...');
+
+          if (paymentData.preference_id) {
+            const { data: transaccion, error } = await supabase
+              .from('transacciones')
+              .update({ payment_id: String(paymentId), estado: 'approved' })
+              .eq('preference_id', paymentData.preference_id)
+              .select('id')
+              .maybeSingle();
+
+            if (error) {
+              console.error('Error al confirmar la transacción en Supabase:', error.message);
+              return res.status(500).send('No se pudo confirmar la transacción');
+            }
+            if (!transaccion) {
+              console.error(`No se encontró la transacción para la preferencia ${paymentData.preference_id}`);
+              return res.status(500).send('No se encontró la transacción');
+            }
+          }
         }
       }
     }

@@ -3,12 +3,38 @@ import { crearCobro } from '../controllers/paymentController.js';
 import { recibirWebhookMP } from '../controllers/webhookController.js';
 import { obtenerBilleteras, registrarPagoUSDT } from '../controllers/usdtController.js';
 import { supabase } from '../config/supabase.js';
+import multer from 'multer';
+import { crearProducto, obtenerDescargaAprobada, obtenerProducto } from '../controllers/productController.js';
 
 const router = Router();
+const uploadPdf = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, callback) => {
+    if (file.mimetype !== 'application/pdf') {
+      return callback(new Error('Solo se permiten archivos PDF'));
+    }
+    return callback(null, true);
+  },
+});
+const manejarCargaPdf = (req, res, next) => {
+  uploadPdf.single('archivo')(req, res, (error) => {
+    if (error) {
+      const status = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+      return res.status(status).json({ error: error.message });
+    }
+    return next();
+  });
+};
 
 // Mercado Pago
 router.post('/crear-cobro', crearCobro);
 router.post('/webhooks/mercadopago', recibirWebhookMP);
+
+// Ebooks
+router.post('/productos/crear', manejarCargaPdf, crearProducto);
+router.get('/productos/:id', obtenerProducto);
+router.get('/productos/descarga/:paymentId', obtenerDescargaAprobada);
 
 // USDT Multired
 router.get('/usdt-wallets', obtenerBilleteras);

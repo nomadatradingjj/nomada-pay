@@ -7,15 +7,11 @@ export const crearCobro = async (req, res) => {
     const { producto_id: productoId, vendedorAccessToken, comisionPorcentaje = 0.015 } = req.body;
     let { titulo, precio } = req.body;
 
-    if (productoId !== undefined) {
-      if (typeof productoId !== 'string' || !productoId.trim()) {
-        return res.status(400).json({ error: 'El identificador del producto no es válido' });
-      }
-
+    if (productoId) {
       const { data: producto, error: productoError } = await supabase
         .from('productos')
         .select('titulo, precio_ars')
-        .eq('id', productoId.trim())
+        .eq('id', productoId)
         .single();
 
       if (productoError || !producto) {
@@ -61,7 +57,7 @@ export const crearCobro = async (req, res) => {
         pending: `${baseUrl}/prueba.html?status=pending`,
       },
       auto_return: 'approved',
-      ...(productoId !== undefined && { external_reference: productoId.trim() }),
+      ...(productoId && { external_reference: String(productoId) }),
     };
 
     // Solo agregar notification_url si tenemos una dirección HTTPS válida

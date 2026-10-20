@@ -31,6 +31,11 @@ export const crearCobro = async (req, res) => {
     const accessTokenVendedor = typeof vendedorAccessToken === 'string'
       ? vendedorAccessToken.trim()
       : '';
+    const tokenUsado = accessTokenVendedor || mpClient.accessToken || '';
+    if (!tokenUsado || tokenUsado.startsWith('TEST-')) {
+      return res.status(503).json({ error: 'Se requiere un access token de Mercado Pago de producción' });
+    }
+
     const marketplaceFee = Math.round(precioNumerico * Number(comisionPorcentaje));
     const preferenceClient = accessTokenVendedor
       ? new MercadoPagoConfig({ accessToken: accessTokenVendedor, options: mpClient.options })
@@ -75,17 +80,8 @@ export const crearCobro = async (req, res) => {
     const response = await preference.create({ body: bodyData });
     console.log('Respuesta de Mercado Pago:', response);
 
-    // Detectar automáticamente si estamos en entorno de prueba o producción
-    const tokenUsado = accessTokenVendedor || mpClient.accessToken || '';
-    const esTokenPrueba = Boolean(
-      process.env.MP_ACCESS_TOKEN?.trim().startsWith('TEST-') || tokenUsado.startsWith('TEST-')
-    );
-    const urlFinal = esTokenPrueba ? response.sandbox_init_point : response.init_point;
-
-    if (!response.id || !urlFinal) {
-      throw new Error(esTokenPrueba
-        ? 'Mercado Pago no devolvió sandbox_init_point para el token de prueba'
-        : 'Mercado Pago no devolvió init_point para el checkout');
+    if (!response.id || !response.init_point) {
+      throw new Error('Mercado Pago no devolvió init_point para el checkout de producción');
     }
 
     // 2. Registro de la transacción en Supabase
@@ -116,8 +112,7 @@ export const crearCobro = async (req, res) => {
     return res.json({
       status: 'success',
       id: response.id,
-      init_point: urlFinal,
-      ...(esTokenPrueba && { sandbox_init_point: response.sandbox_init_point }),
+      init_point: response.init_point,
       comision_calculada: marketplaceFee
     });
 

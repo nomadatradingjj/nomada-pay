@@ -53,17 +53,17 @@
     <div id="checkoutContent">
       <div class="space-y-1 mb-6">
         <span class="text-zinc-400 text-xs font-semibold uppercase tracking-widest">Estás adquiriendo</span>
-        <h2 id="productTitle" class="text-xl sm:text-2xl font-bold tracking-tight text-white">Suscripción Trading VIP</h2>
+        <h2 id="productTitle" class="text-xl sm:text-2xl font-bold tracking-tight text-white">Ebook Nómada Pay</h2>
         <div class="flex items-baseline gap-2 pt-2">
           <span id="productPrice" class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">\$10,00 ARS</span>
-          <span id="productUsdPrice" class="text-xs font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md border border-zinc-700">o 15.00 USDT</span>
+          <span id="productUsdPrice" class="hidden text-xs font-semibold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-md border border-zinc-700">o 15.00 USDT</span>
         </div>
       </div>
 
       <div class="bg-zinc-950/45 rounded-2xl border border-zinc-800/60 p-4 space-y-3 mb-8">
         <div class="flex justify-between text-sm">
           <span class="text-zinc-400">Subtotal</span>
-          <span id="checkoutSubtotal" class="font-medium text-zinc-200">\$10,00 ARS / 15 USDT</span>
+          <span id="checkoutSubtotal" class="font-medium text-zinc-200">\$10,00 ARS</span>
         </div>
         <div class="flex justify-between text-sm pb-3 border-b border-zinc-800/50">
           <span class="text-zinc-400">Comisión de pasarela</span>
@@ -329,7 +329,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            titulo: 'Suscripción Trading VIP',
+            titulo: 'Ebook Nómada Pay',
             precio: 15,
             red: redSeleccionada,
             txid: txid
@@ -365,7 +365,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            titulo: 'Suscripción Trading VIP',
+            titulo: 'Ebook Nómada Pay',
             precio: 10,
             comisionPorcentaje: 0.015,
             ...(productoId && { producto_id: productoId })
@@ -377,7 +377,7 @@
           throw new Error(data.detalles || data.error || 'Error al generar cobro');
         }
 
-        const checkoutUrl = data.sandbox_init_point || data.init_point;
+        const checkoutUrl = data.init_point;
         if (typeof checkoutUrl !== 'string' || !checkoutUrl) {
           throw new Error('Mercado Pago no devolvió una URL de checkout');
         }

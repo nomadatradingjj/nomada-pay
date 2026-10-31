@@ -23,37 +23,41 @@ export const getConfiguracion = async (req, res) => {
     const idCliente = req.user?.cliente_id || req.user?.tienda_id || 'default';
     let { data, error } = await supabase
       .from('configuraciones_pago')
-      .select('cliente_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
+      .select('cliente_id, tienda_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
       .eq('cliente_id', idCliente)
       .maybeSingle();
 
     if (error) {
       console.error('Error al consultar la configuración de pago:', error.message);
-      return res.status(500).json({ error: 'No se pudo consultar la configuración de pago' });
+      return res.status(400).json({ error: error.message });
     }
 
     if (!data && idCliente !== 'default') {
-      const resultadoDefault = await supabase
+      const resultadoTienda = await supabase
         .from('configuraciones_pago')
-        .select('cliente_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
-        .eq('cliente_id', 'default')
+        .select('cliente_id, tienda_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
+        .eq('tienda_id', idCliente)
         .maybeSingle();
 
-      if (resultadoDefault.error) {
-        console.error('Error al consultar la configuración por defecto:', resultadoDefault.error.message);
-        return res.status(500).json({ error: 'No se pudo consultar la configuración por defecto' });
+      if (resultadoTienda.error) {
+        console.error('Error al consultar la configuración por tienda:', resultadoTienda.error.message);
+        return res.status(400).json({ error: resultadoTienda.error.message });
       }
-      data = resultadoDefault.data;
+      data = resultadoTienda.data;
     }
 
-    return res.json(data || {
-      cliente_id: idCliente,
-      wallet_trc20: '',
-      wallet_bep20: '',
-      qr_trc20_url: '',
-      qr_bep20_url: '',
-      cotizacion_usd_ars: 0,
-    });
+    if (!data) {
+      return res.status(200).json({
+        cliente_id: idCliente,
+        wallet_trc20: process.env.USDT_TRC20_WALLET || '',
+        wallet_bep20: process.env.USDT_BEP20_WALLET || '',
+        qr_trc20_url: '',
+        qr_bep20_url: '',
+        cotizacion_usd_ars: 1620,
+      });
+    }
+
+    return res.status(200).json(data);
   } catch (error) {
     console.error('Error interno al consultar la configuración de pago:', error);
     return res.status(500).json({ error: 'Error interno al consultar la configuración de pago' });
@@ -63,45 +67,51 @@ export const getConfiguracion = async (req, res) => {
 export const updateConfiguracion = async (req, res) => {
   const idCliente = req.user?.cliente_id || req.user?.tienda_id || 'default';
   const body = req.body || {};
-  const configuracion = { cliente_id: idCliente };
+  const camposConfiguracion = {
+    wallet_trc20: body.wallet_trc20,
+    wallet_bep20: body.wallet_bep20,
+    qr_trc20_url: body.qr_trc20_url,
+    qr_bep20_url: body.qr_bep20_url,
+    cotizacion_usd_ars: body.cotizacion_usd_ars,
+  };
   const camposTexto = ['wallet_trc20', 'wallet_bep20', 'qr_trc20_url', 'qr_bep20_url'];
 
   for (const campo of camposTexto) {
-    if (body[campo] === undefined) continue;
-    if (typeof body[campo] !== 'string' || body[campo].length > 2048) {
+    if (camposConfiguracion[campo] === undefined) {
+      camposConfiguracion[campo] = '';
+      continue;
+    }
+    if (typeof camposConfiguracion[campo] !== 'string' || camposConfiguracion[campo].length > 2048) {
       return res.status(400).json({ error: `El campo ${campo} debe ser texto de hasta 2048 caracteres` });
     }
-    if (campo.startsWith('qr_') && body[campo].trim() && !esUrlWebValida(body[campo])) {
+    if (campo.startsWith('qr_') && camposConfiguracion[campo].trim() && !esUrlWebValida(camposConfiguracion[campo])) {
       return res.status(400).json({ error: `El campo ${campo} debe ser una URL HTTP o HTTPS válida` });
     }
-    configuracion[campo] = body[campo].trim();
+    camposConfiguracion[campo] = camposConfiguracion[campo].trim();
   }
 
-  if (body.cotizacion_usd_ars !== undefined) {
-    const cotizacion = Number(body.cotizacion_usd_ars);
-    if (!Number.isFinite(cotizacion) || cotizacion <= 0) {
-      return res.status(400).json({ error: 'La cotización USD/ARS debe ser un número mayor a cero' });
-    }
-    configuracion.cotizacion_usd_ars = cotizacion;
+  const cotizacion = Number(camposConfiguracion.cotizacion_usd_ars);
+  if (!Number.isFinite(cotizacion) || cotizacion <= 0) {
+    return res.status(400).json({ error: 'La cotización USD/ARS debe ser un número mayor a cero' });
   }
-
-  if (Object.keys(configuracion).length === 1) {
-    return res.status(400).json({ error: 'No se recibieron campos de configuración para actualizar' });
-  }
+  camposConfiguracion.cotizacion_usd_ars = cotizacion;
 
   try {
     const { data, error } = await supabase
       .from('configuraciones_pago')
-      .upsert(configuracion, { onConflict: 'cliente_id' })
-      .select('cliente_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
-      .single();
+      .upsert({
+        cliente_id: idCliente,
+        tienda_id: idCliente,
+        ...camposConfiguracion,
+      }, { onConflict: 'cliente_id' })
+      .select();
 
     if (error) {
-      console.error('Error al actualizar la configuración de pago:', error.message);
-      return res.status(500).json({ error: 'No se pudo actualizar la configuración de pago' });
+      console.error('Error upsert config:', error);
+      return res.status(400).json({ error: error.message });
     }
 
-    return res.json(data);
+    return res.status(200).json(data);
   } catch (error) {
     console.error('Error interno al actualizar la configuración de pago:', error);
     return res.status(500).json({ error: 'Error interno al actualizar la configuración de pago' });
@@ -142,6 +152,7 @@ export const subirQrPago = async (req, res) => {
       .from('configuraciones_pago')
       .upsert({
         cliente_id: idCliente,
+        tienda_id: idCliente,
         [campoUrl]: publicUrl.publicUrl,
       }, { onConflict: 'cliente_id' })
       .select('cliente_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
@@ -174,7 +185,7 @@ export const listarProductos = async (req, res) => {
       return res.status(500).json({ error: 'No se pudieron consultar los productos' });
     }
 
-    return res.json(data);
+    return res.status(200).json(data || []);
   } catch (error) {
     console.error('Error interno al listar productos:', error);
     return res.status(500).json({ error: 'Error interno al consultar los productos' });

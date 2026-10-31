@@ -7,6 +7,7 @@ import {
   cambiarEstadoTransaccion,
   crearProducto,
   getConfiguracion,
+  getConfiguracionPublica,
   listarProductos,
   listarTransacciones,
   obtenerDescargaAprobada,
@@ -81,6 +82,7 @@ const manejarCargaQr = (req, res, next) => {
 // Dashboard authentication and tenant-scoped management
 router.get('/dashboard/public-config', getSupabasePublicConfig);
 router.post('/dashboard/login', iniciarSesionDashboard);
+router.get('/config/public/:clienteId', getConfiguracionPublica);
 router.get('/config/:clienteId?', requireDashboardAuth, validarAlcanceCliente, getConfiguracion);
 router.put('/config/:clienteId?', requireDashboardAuth, validarAlcanceCliente, updateConfiguracion);
 router.put('/config/:clienteId/qr/:red', requireDashboardAuth, validarAlcanceCliente, manejarCargaQr, subirQrPago);

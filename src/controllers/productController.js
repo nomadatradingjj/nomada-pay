@@ -67,6 +67,56 @@ export const getConfiguracion = async (req, res) => {
   }
 };
 
+export const getConfiguracionPublica = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  const clienteId = req.params.clienteId;
+  if (!clienteId || clienteId.length > 200) {
+    return res.status(400).json({ error: 'Se requiere un identificador de cliente válido' });
+  }
+
+  try {
+    let { data, error } = await supabase
+      .from('configuraciones_pago')
+      .select('cliente_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
+      .eq('cliente_id', clienteId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error al consultar la configuración pública de pago:', error.message);
+      return res.status(500).json({ error: 'No se pudo consultar la configuración pública de pago' });
+    }
+
+    if (!data) {
+      const resultadoTienda = await supabase
+        .from('configuraciones_pago')
+        .select('cliente_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
+        .eq('tienda_id', clienteId)
+        .maybeSingle();
+
+      if (resultadoTienda.error) {
+        console.error('Error al consultar la configuración pública por tienda:', resultadoTienda.error.message);
+        return res.status(500).json({ error: 'No se pudo consultar la configuración pública de pago' });
+      }
+      data = resultadoTienda.data;
+    }
+
+    return res.status(200).json(data || {
+      cliente_id: clienteId,
+      wallet_trc20: process.env.USDT_TRC20_WALLET || '',
+      wallet_bep20: process.env.USDT_BEP20_WALLET || '',
+      qr_trc20_url: '',
+      qr_bep20_url: '',
+      cotizacion_usd_ars: 1620,
+    });
+  } catch (error) {
+    console.error('Error interno al consultar la configuración pública de pago:', error);
+    return res.status(500).json({ error: 'Error interno al consultar la configuración pública de pago' });
+  }
+};
+
 export const updateConfiguracion = async (req, res) => {
   const idCliente = req.user?.cliente_id || req.user?.tienda_id || 'default';
   const body = req.body || {};

@@ -3,287 +3,472 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Orbit Pay - Dashboard B2B</title>
-  <!-- Tailwind CSS CDN -->
+  <meta name="theme-color" content="#09090B">
+  <title>NÓMADA PAY | Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .glass-card {
-      background: rgba(24, 24, 27, 0.75);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(39, 39, 42, 0.8);
-    }
+    :root { color-scheme: dark; }
+    body { font-family: "DM Sans", sans-serif; background: #09090B; }
+    h1, h2, h3, .brand { font-family: "Manrope", sans-serif; }
+    .panel { background: linear-gradient(145deg, rgba(24,24,27,.94), rgba(15,15,17,.96)); border: 1px solid rgba(63,63,70,.55); }
+    .gold { color: #FFC600; }
+    .gold-button { background: #FFC600; color: #111; }
+    .gold-button:hover { background: #ffd43b; }
+    .tab-active { color: #FFC600; border-color: #FFC600; background: rgba(255,198,0,.07); }
+    input, select, textarea { color-scheme: dark; }
   </style>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col antialiased">
+<body class="min-h-screen text-zinc-100 antialiased">
+  <section id="loginScreen" class="min-h-screen flex items-center justify-center px-4 py-10">
+    <form id="loginForm" class="panel w-full max-w-md rounded-3xl p-8 shadow-2xl shadow-black/40">
+      <div class="brand text-sm font-extrabold tracking-[.22em] text-white">NÓMADA <span class="gold">PAY</span></div>
+      <h1 class="mt-8 text-2xl font-bold">Acceso al dashboard</h1>
+      <p class="mt-2 text-sm text-zinc-400">Inicia sesión con tu cuenta de Supabase para administrar tu pasarela.</p>
+      <label class="mt-7 block text-xs font-semibold uppercase tracking-wider text-zinc-400" for="loginEmail">Email</label>
+      <input id="loginEmail" type="email" autocomplete="username" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]">
+      <label class="mt-5 block text-xs font-semibold uppercase tracking-wider text-zinc-400" for="loginPassword">Contraseña</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]">
+      <p id="loginError" class="mt-4 hidden text-sm text-red-400" role="alert"></p>
+      <button class="gold-button mt-6 w-full rounded-xl px-4 py-3 font-bold transition" type="submit">Iniciar sesión</button>
+    </form>
+  </section>
 
-  <!-- Navbar Superior -->
-  <header class="border-b border-zinc-800/80 bg-zinc-900/60 backdrop-blur-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="bg-amber-500/10 text-amber-500 p-2 rounded-xl border border-amber-500/20">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m3.75 13.5 10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-          </svg>
-        </div>
-        <span class="font-extrabold text-lg tracking-wider bg-gradient-to-r from-zinc-100 via-zinc-200 to-amber-500 bg-clip-text text-transparent">Orbit <span class="text-amber-500 font-semibold">PAY</span></span>
-        <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-0.5 rounded-full border border-zinc-700 font-mono">B2B Dashboard</span>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <button id="btnRefresh" class="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs px-3.5 py-2 rounded-xl border border-zinc-700 transition cursor-pointer">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-          </svg>
-          Actualizar Datos
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Contenido Principal -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
-    
-    <!-- Encabezado -->
-    <div>
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Métricas & Flujo de Caja</h1>
-      <p class="text-sm text-zinc-400 mt-1">Resumen en vivo de transacciones procesadas en Supabase.</p>
-    </div>
-
-    <!-- Tarjetas KPI -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      
-      <!-- Total ARS (Aprobados) -->
-      <div class="glass-card p-5 rounded-2xl">
-        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Acreditado (Pesos)</div>
-        <div id="statMontoARS" class="text-2xl font-black text-white">\$0,00 ARS</div>
-        <div class="mt-2 flex items-center gap-1.5 text-[11px] text-blue-400 font-medium">
-          <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-          Mercado Pago (Aprobados)
-        </div>
-      </div>
-
-      <!-- Total USDT (Aprobados) -->
-      <div class="glass-card p-5 rounded-2xl">
-        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Acreditado (USDT)</div>
-        <div id="statMontoUSDT" class="text-2xl font-black text-amber-400">0.00 USDT</div>
-        <div class="mt-2 flex items-center gap-1.5 text-[11px] text-amber-400 font-medium">
-          <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-          Cripto Verificados
-        </div>
-      </div>
-
-      <!-- Comisiones Pasarela -->
-      <div class="glass-card p-5 rounded-2xl">
-        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Comisiones Retenidas</div>
-        <div id="statComisiones" class="text-2xl font-black text-emerald-400">\$0,00 ARS</div>
-        <div class="mt-2 text-[11px] text-zinc-500">Comisión ganada (1.5%)</div>
-      </div>
-
-      <!-- Total Operaciones -->
-      <div class="glass-card p-5 rounded-2xl">
-        <div class="text-zinc-400 text-xs font-medium uppercase tracking-wider mb-2">Ventas Totales</div>
-        <div id="statTotalVentas" class="text-2xl font-black text-white">0</div>
-        <div class="mt-2 text-[11px] text-zinc-500">Operaciones en historial</div>
-      </div>
-
-    </div>
-
-    <!-- Tabla de Transacciones -->
-    <div class="glass-card rounded-2xl p-6 border border-zinc-800">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+  <div id="dashboardApp" class="hidden min-h-screen">
+    <header class="sticky top-0 z-30 border-b border-zinc-800 bg-[#09090B]/90 backdrop-blur-xl">
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <div>
-          <h2 class="text-lg font-bold text-white">Historial de Transacciones</h2>
-          <p class="text-xs text-zinc-400">Panel de verificación y gestión de pagos</p>
+          <div class="brand text-sm font-extrabold tracking-[.22em] text-white">NÓMADA <span class="gold">PAY</span></div>
+          <p class="mt-1 text-[11px] text-zinc-500">PANEL DE COMERCIO <span class="px-1">·</span> <span id="tenantLabel"></span></p>
         </div>
-        
-        <!-- Filtros -->
-        <div class="flex items-center gap-2 bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs">
-          <button onclick="filtrarTabla('todas')" class="px-3 py-1.5 rounded-lg font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition">Todas</button>
-          <button onclick="filtrarTabla('mercadopago')" class="px-3 py-1.5 rounded-lg font-medium text-blue-400 hover:bg-zinc-800 transition">Mercado Pago</button>
-          <button onclick="filtrarTabla('binance')" class="px-3 py-1.5 rounded-lg font-medium text-amber-400 hover:bg-zinc-800 transition">Binance / USDT</button>
+        <div class="flex items-center gap-2">
+          <button id="refreshButton" class="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">Actualizar</button>
+          <button id="logoutButton" class="rounded-xl border border-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:text-white">Salir</button>
         </div>
       </div>
+    </header>
 
-      <!-- Tabla -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-zinc-300">
-          <thead class="text-xs uppercase bg-zinc-950/80 text-zinc-400 border-b border-zinc-800">
-            <tr>
-              <th class="py-3 px-4 font-semibold">Fecha</th>
-              <th class="py-3 px-4 font-semibold">Concepto</th>
-              <th class="py-3 px-4 font-semibold">Pasarela / Hash</th>
-              <th class="py-3 px-4 font-semibold">Monto</th>
-              <th class="py-3 px-4 font-semibold">Estado</th>
-              <th class="py-3 px-4 font-semibold text-right">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tablaCuerpo" class="divide-y divide-zinc-800/60">
-            <tr>
-              <td colspan="6" class="text-center py-8 text-zinc-500">Cargando transacciones desde Supabase...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <main class="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <section>
+        <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+          <div>
+            <p class="gold text-xs font-bold uppercase tracking-[.2em]">Resumen de tu negocio</p>
+            <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-white">Centro de operaciones</h1>
+          </div>
+          <p id="lastUpdated" class="text-xs text-zinc-500"></p>
+        </div>
+        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <article class="panel rounded-2xl p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total facturado ARS</p>
+            <p id="metricArs" class="mt-3 text-2xl font-extrabold text-white">$ 0</p>
+            <p class="mt-2 text-xs text-zinc-500">Ventas aprobadas en pesos</p>
+          </article>
+          <article class="panel rounded-2xl p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total recibido USDT</p>
+            <p id="metricUsdt" class="gold mt-3 text-2xl font-extrabold">0 USDT</p>
+            <p class="mt-2 text-xs text-zinc-500">Pagos cripto aprobados</p>
+          </article>
+          <article class="panel rounded-2xl p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Cantidad de ventas</p>
+            <p id="metricSales" class="mt-3 text-2xl font-extrabold text-white">0</p>
+            <p class="mt-2 text-xs text-zinc-500">Operaciones aprobadas</p>
+          </article>
+          <article class="panel rounded-2xl p-5">
+            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Comprobantes por aprobar</p>
+            <p id="metricPending" class="mt-3 text-2xl font-extrabold text-amber-300">0</p>
+            <p class="mt-2 text-xs text-zinc-500">Pagos manuales pendientes</p>
+          </article>
+        </div>
+      </section>
 
-  </main>
+      <nav class="flex gap-2 overflow-x-auto border-b border-zinc-800" aria-label="Secciones del dashboard">
+        <button class="tab-button tab-active whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold text-zinc-400 transition" data-tab="settings">Ajustes de Pasarela</button>
+        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="products">Creador de Productos</button>
+        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="transactions">Auditoría de Ventas</button>
+      </nav>
+
+      <section id="tab-settings" class="tab-panel">
+        <div class="panel rounded-2xl p-5 sm:p-7">
+          <div class="mb-6">
+            <h2 class="text-xl font-bold">Ajustes de Pasarela</h2>
+            <p class="mt-1 text-sm text-zinc-500">Configura los datos que verán tus compradores al elegir USDT.</p>
+          </div>
+          <form id="settingsForm" class="grid gap-5 md:grid-cols-2">
+            <label class="block text-sm text-zinc-300">Wallet USDT · TRC20
+              <input name="wallet_trc20" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Dirección TRC20">
+            </label>
+            <label class="block text-sm text-zinc-300">Wallet USDT · BEP20
+              <input name="wallet_bep20" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Dirección BEP20">
+            </label>
+            <label class="block text-sm text-zinc-300">URL de QR · TRC20
+              <input name="qr_trc20_url" type="url" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="https://...">
+              <span class="mt-2 flex gap-2"><input id="qrTrc20File" type="file" accept="image/jpeg,image/png,image/webp" class="min-w-0 flex-1 text-xs text-zinc-500 file:mr-2 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-zinc-200"><button type="button" data-qr="trc20" class="upload-qr rounded-lg border border-zinc-700 px-3 text-xs font-semibold text-zinc-300 hover:border-[#FFC600] hover:text-[#FFC600]">Subir QR</button></span>
+            </label>
+            <label class="block text-sm text-zinc-300">URL de QR · BEP20
+              <input name="qr_bep20_url" type="url" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="https://...">
+              <span class="mt-2 flex gap-2"><input id="qrBep20File" type="file" accept="image/jpeg,image/png,image/webp" class="min-w-0 flex-1 text-xs text-zinc-500 file:mr-2 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-zinc-200"><button type="button" data-qr="bep20" class="upload-qr rounded-lg border border-zinc-700 px-3 text-xs font-semibold text-zinc-300 hover:border-[#FFC600] hover:text-[#FFC600]">Subir QR</button></span>
+            </label>
+            <label class="block text-sm text-zinc-300 md:col-span-2">Cotización USD / ARS
+              <input name="cotizacion_usd_ars" type="number" min="0.01" step="0.01" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Ej. 1200">
+            </label>
+            <div class="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center">
+              <button id="saveSettingsButton" class="gold-button rounded-xl px-5 py-3 text-sm font-bold transition" type="submit">Guardar configuración</button>
+              <p id="settingsMessage" class="text-sm text-zinc-500" role="status"></p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="tab-products" class="tab-panel hidden space-y-6">
+        <div class="panel rounded-2xl p-5 sm:p-7">
+          <h2 class="text-xl font-bold">Creador de E-books / Productos</h2>
+          <p class="mt-1 text-sm text-zinc-500">Publica un producto digital y genera un enlace de checkout para cualquier sitio web.</p>
+          <form id="productForm" class="mt-6 grid gap-4 md:grid-cols-2">
+            <label class="text-sm text-zinc-300">Título
+              <input name="titulo" required maxlength="200" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Nombre del producto">
+            </label>
+            <label class="text-sm text-zinc-300">Tipo
+              <select name="tipo" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]">
+                <option value="ebook">E-book</option>
+                <option value="curso">Curso</option>
+                <option value="matricula">Matrícula</option>
+              </select>
+            </label>
+            <label class="text-sm text-zinc-300">Precio ARS
+              <input name="precio_ars" type="number" min="0" step="0.01" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="0">
+            </label>
+            <label class="text-sm text-zinc-300">Precio USD / USDT
+              <input name="precio_usd" type="number" min="0" step="0.01" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="0">
+            </label>
+            <label class="text-sm text-zinc-300 md:col-span-2">Link de entrega pospago
+              <input name="link_entrega" type="url" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="https://...">
+            </label>
+            <label class="text-sm text-zinc-300 md:col-span-2">Descripción
+              <textarea name="descripcion" rows="3" maxlength="2000" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Descripción opcional del producto"></textarea>
+            </label>
+            <div class="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center">
+              <button id="createProductButton" class="gold-button rounded-xl px-5 py-3 text-sm font-bold transition" type="submit">Crear producto</button>
+              <p id="productMessage" class="text-sm text-zinc-500" role="status"></p>
+            </div>
+          </form>
+        </div>
+        <div class="panel overflow-hidden rounded-2xl">
+          <div class="border-b border-zinc-800 px-5 py-4">
+            <h3 class="font-bold">Productos activos</h3>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[760px] text-left text-sm">
+              <thead class="bg-zinc-950/70 text-[11px] uppercase tracking-wider text-zinc-500">
+                <tr><th class="px-5 py-3">Producto</th><th class="px-5 py-3">Tipo</th><th class="px-5 py-3">Precio</th><th class="px-5 py-3 text-right">Enlace de pago</th></tr>
+              </thead>
+              <tbody id="productsTable" class="divide-y divide-zinc-800/80">
+                <tr><td colspan="4" class="px-5 py-8 text-center text-zinc-500">Cargando productos…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-transactions" class="tab-panel hidden">
+        <div class="panel overflow-hidden rounded-2xl">
+          <div class="flex flex-col justify-between gap-3 border-b border-zinc-800 px-5 py-5 sm:flex-row sm:items-center">
+            <div>
+              <h2 class="text-xl font-bold">Auditoría de Ventas</h2>
+              <p class="mt-1 text-sm text-zinc-500">Revisa pagos, comprobantes y estado de acreditación.</p>
+            </div>
+            <select id="transactionFilter" class="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300">
+              <option value="all">Todos los pagos</option>
+              <option value="pending">Pendientes</option>
+              <option value="approved">Aprobados</option>
+              <option value="rejected">Rechazados</option>
+            </select>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[900px] text-left text-sm">
+              <thead class="bg-zinc-950/70 text-[11px] uppercase tracking-wider text-zinc-500">
+                <tr><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Producto / Pasarela</th><th class="px-5 py-3">Monto</th><th class="px-5 py-3">Comprobante</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3 text-right">Acciones</th></tr>
+              </thead>
+              <tbody id="transactionsTable" class="divide-y divide-zinc-800/80">
+                <tr><td colspan="6" class="px-5 py-8 text-center text-zinc-500">Cargando transacciones…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <p id="globalMessage" class="hidden rounded-xl border border-red-900/70 bg-red-950/40 px-4 py-3 text-sm text-red-300" role="alert"></p>
+    </main>
+  </div>
 
   <script>
-    let transaccionesTotales = [];
+    const tokenKey = 'nomada_dashboard_access_token';
+    const tenantKey = 'nomada_dashboard_cliente_id';
+    let accessToken = sessionStorage.getItem(tokenKey);
+    let clienteId = sessionStorage.getItem(tenantKey);
+    let transacciones = [];
+    let productos = [];
 
-    async function obtenerTransacciones() {
-      const cuerpo = document.getElementById('tablaCuerpo');
-      
-      try {
-        const res = await fetch('/api/historial-transacciones');
-        if (!res.ok) throw new Error("Error al consultar la API");
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    })[char]);
 
-        transaccionesTotales = await res.json();
-        renderizarTabla(transaccionesTotales);
-      } catch (err) {
-        console.error("Error al cargar historial:", err);
-        cuerpo.innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-8 text-zinc-500">
-              No hay ventas registradas o hubo un error de conexión.<br>
-              Generá una prueba desde <a href="/prueba.html" class="text-amber-400 underline font-semibold">prueba.html</a>
-            </td>
-          </tr>`;
+    const api = async (path, options = {}) => {
+      const headers = new Headers(options.headers || {});
+      if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+      if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
+      const response = await fetch(path, { ...options, headers });
+      const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        cerrarSesion();
+        throw new Error(payload.error || 'La sesión expiró. Inicia sesión otra vez.');
+      }
+      if (!response.ok) throw new Error(payload.error || 'No se pudo completar la solicitud');
+      return payload;
+    };
+
+    const mostrarMensaje = (element, text, isError = false) => {
+      element.textContent = text;
+      element.className = `text-sm ${isError ? 'text-red-400' : 'text-emerald-400'}`;
+    };
+
+    function cerrarSesion() {
+      sessionStorage.removeItem(tokenKey);
+      sessionStorage.removeItem(tenantKey);
+      accessToken = null;
+      clienteId = null;
+      document.getElementById('dashboardApp').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+
+    function mostrarDashboard() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboardApp').classList.remove('hidden');
+      document.getElementById('tenantLabel').textContent = clienteId || 'Cuenta';
+      cargarDashboard().catch(mostrarErrorGlobal);
+    }
+
+    function mostrarErrorGlobal(error) {
+      const message = document.getElementById('globalMessage');
+      message.textContent = error instanceof Error ? error.message : 'Ocurrió un error';
+      message.classList.remove('hidden');
+    }
+
+    async function cargarDashboard() {
+      document.getElementById('globalMessage').classList.add('hidden');
+      await Promise.all([cargarConfiguracion(), cargarProductos(), cargarTransacciones()]);
+      document.getElementById('lastUpdated').textContent = `Actualizado ${new Date().toLocaleTimeString('es-AR')}`;
+    }
+
+    async function cargarConfiguracion() {
+      const config = await api(`/api/config/${encodeURIComponent(clienteId)}`);
+      const form = document.getElementById('settingsForm');
+      for (const field of ['wallet_trc20', 'wallet_bep20', 'qr_trc20_url', 'qr_bep20_url', 'cotizacion_usd_ars']) {
+        form.elements[field].value = config[field] ?? '';
       }
     }
 
-    function filtrarTabla(pasarela) {
-      if (pasarela === 'todas') {
-        renderizarTabla(transaccionesTotales);
-      } else {
-        const filtradas = transaccionesTotales.filter(t => t.pasarela === pasarela);
-        renderizarTabla(filtradas);
-      }
+    function urlCheckout(producto) {
+      const url = new URL('/prueba.html', window.location.origin);
+      url.searchParams.set('producto_id', producto.id);
+      return url.href;
     }
 
-    async function cambiarEstado(id, nuevoEstado) {
-      if (!confirm(`¿Estás seguro de cambiar el estado de este pago a ${nuevoEstado.toUpperCase()}?`)) return;
-
-      try {
-        const res = await fetch('/api/cambiar-estado-transaccion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, estado: nuevoEstado })
+    async function cargarProductos() {
+      productos = await api(`/api/productos/${encodeURIComponent(clienteId)}`);
+      const tbody = document.getElementById('productsTable');
+      if (!productos.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="px-5 py-8 text-center text-zinc-500">Todavía no hay productos activos.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = productos.map((producto) => {
+        const checkout = urlCheckout(producto);
+        const tipo = { ebook: 'E-book', curso: 'Curso', matricula: 'Matrícula' }[producto.tipo] || producto.tipo;
+        return `<tr>
+          <td class="px-5 py-4"><div class="font-semibold text-white">${escapeHtml(producto.titulo)}</div><div class="mt-1 text-xs text-zinc-500">${escapeHtml(producto.descripcion || '')}</div></td>
+          <td class="px-5 py-4 text-zinc-300">${escapeHtml(tipo)}</td>
+          <td class="px-5 py-4 whitespace-nowrap text-xs text-zinc-300">${Number(producto.precio_ars).toLocaleString('es-AR')} ARS <span class="text-zinc-600">/</span> ${Number(producto.precio_usd).toLocaleString('en-US')} USD</td>
+          <td class="px-5 py-4 text-right"><div class="flex justify-end gap-2"><a href="${escapeHtml(checkout)}" target="_blank" rel="noopener noreferrer" class="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-[#FFC600] hover:text-[#FFC600]">Abrir</a><button type="button" data-copy="${escapeHtml(checkout)}" class="copy-link rounded-lg bg-[#FFC600]/10 px-3 py-2 text-xs font-semibold text-[#FFC600] hover:bg-[#FFC600]/20">Copiar link</button></div></td>
+        </tr>`;
+      }).join('');
+      tbody.querySelectorAll('.copy-link').forEach((button) => {
+        button.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(button.dataset.copy);
+            button.textContent = 'Copiado';
+            setTimeout(() => { button.textContent = 'Copiar link'; }, 1500);
+          } catch {
+            mostrarErrorGlobal(new Error('El navegador no permitió copiar el enlace'));
+          }
         });
-
-        const data = await res.json();
-        if (data.status === 'success') {
-          obtenerTransacciones(); // Recargar datos
-        } else {
-          alert('Error al actualizar estado');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Error de conexión');
-      }
+      });
     }
 
-    function renderizarTabla(lista) {
-      const cuerpo = document.getElementById('tablaCuerpo');
-      
-      if (!lista || lista.length === 0) {
-        cuerpo.innerHTML = `
-          <tr>
-            <td colspan="6" class="text-center py-8 text-zinc-500">No hay transacciones registradas.</td>
-          </tr>`;
-        
-        document.getElementById('statMontoARS').innerText = '\$0,00 ARS';
-        document.getElementById('statMontoUSDT').innerText = '0.00 USDT';
-        document.getElementById('statComisiones').innerText = '\$0,00 ARS';
-        document.getElementById('statTotalVentas').innerText = '0';
+    const estadoLabel = (estado) => ({
+      approved: ['Aprobado', 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'],
+      rejected: ['Rechazado', 'border-red-500/30 bg-red-500/10 text-red-300'],
+      pending: ['Pendiente', 'border-amber-500/30 bg-amber-500/10 text-amber-300'],
+    }[estado] || [estado || 'Sin estado', 'border-zinc-700 bg-zinc-800 text-zinc-300']);
+
+    async function cargarTransacciones() {
+      transacciones = await api(`/api/transacciones/${encodeURIComponent(clienteId)}`);
+      renderizarTransacciones();
+    }
+
+    function renderizarTransacciones() {
+      const filtro = document.getElementById('transactionFilter').value;
+      const tbody = document.getElementById('transactionsTable');
+      const aprobadas = transacciones.filter((item) => item.estado === 'approved');
+      const totalArs = aprobadas.filter((item) => item.pasarela !== 'binance').reduce((total, item) => total + Number(item.monto || 0), 0);
+      const totalUsdt = aprobadas.filter((item) => item.pasarela === 'binance').reduce((total, item) => total + Number(item.monto || 0), 0);
+      document.getElementById('metricArs').textContent = `$ ${totalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('metricUsdt').textContent = `${totalUsdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
+      document.getElementById('metricSales').textContent = String(aprobadas.length);
+      document.getElementById('metricPending').textContent = String(transacciones.filter((item) =>
+        item.estado === 'pending' && (item.pasarela === 'binance' || item.comprobante_path),
+      ).length);
+      const lista = filtro === 'all' ? transacciones : transacciones.filter((item) => item.estado === filtro);
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-zinc-500">No hay ventas para mostrar.</td></tr>';
         return;
       }
 
-      let totalARS = 0;
-      let totalUSDT = 0;
-      let totalComisiones = 0;
-
-      cuerpo.innerHTML = lista.map(tx => {
-        const fecha = new Date(tx.created_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
-        const esCripto = tx.pasarela === 'binance';
-        const esAprobado = tx.estado === 'approved';
-
-        // Solo sumamos los importes que estén APROBADOS
-        if (esAprobado) {
-          if (esCripto) {
-            totalUSDT += Number(tx.monto || 0);
-          } else {
-            totalARS += Number(tx.monto || 0);
-            totalComisiones += Number(tx.comision || 0);
-          }
-        }
-
-        const badgePasarela = esCripto 
-          ? `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-semibold">Binance USDT</span>`
-          : `<span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-1 rounded-lg text-xs font-semibold">Mercado Pago</span>`;
-
-        const badgeEstado = esAprobado
-          ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-md text-xs font-semibold">Aprobado</span>`
-          : tx.estado === 'rejected'
-          ? `<span class="bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-md text-xs font-semibold">Rechazado</span>`
-          : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-md text-xs font-semibold animate-pulse">Pendiente</span>`;
-
-        // Columna de Hash/TxID o ID de preferencia
-        let detalleHash = '';
-        if (tx.payment_id) {
-          const hashCorto = tx.payment_id.length > 16 ? tx.payment_id.substring(0, 10) + '...' : tx.payment_id;
-          const urlExplorer = tx.titulo.includes('TRC') 
-            ? `https://tronscan.org/#/transaction/${tx.payment_id}`
-            : `https://bscscan.com/tx/${tx.payment_id}`;
-
-          detalleHash = `<div class="mt-1 text-[11px] font-mono text-zinc-400 flex items-center gap-1">
-            TxID: <a href="${urlExplorer}" target="_blank" class="text-amber-400 underline hover:text-amber-300">${hashCorto} ↗</a>
-          </div>`;
-        }
-
-        // Botones de acción
-        let acciones = '';
-        if (!esAprobado) {
-          acciones = `
-            <div class="flex items-center justify-end gap-2">
-              <button onclick="cambiarEstado('${tx.id}', 'approved')" class="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border border-emerald-500/40 text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer">
-                Aprobar
-              </button>
-              <button onclick="cambiarEstado('${tx.id}', 'rejected')" class="bg-zinc-800 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-zinc-700 hover:border-red-500/40 text-xs font-medium px-2.5 py-1.5 rounded-lg transition cursor-pointer">
-                X
-              </button>
-            </div>
-          `;
-        } else {
-          acciones = `<span class="text-xs text-zinc-500 font-medium">Verificado</span>`;
-        }
-
-        return `
-          <tr class="hover:bg-zinc-900/50 transition">
-            <td class="py-3.5 px-4 text-xs font-mono text-zinc-400">${fecha}</td>
-            <td class="py-3.5 px-4 font-semibold text-white">${tx.titulo}</td>
-            <td class="py-3.5 px-4">${badgePasarela}${detalleHash}</td>
-            <td class="py-3.5 px-4 font-bold text-zinc-100">${esCripto ? tx.monto + ' USDT' : '$' + Number(tx.monto).toLocaleString('es-AR') + ' ARS'}</td>
-            <td class="py-3.5 px-4">${badgeEstado}</td>
-            <td class="py-3.5 px-4 text-right">${acciones}</td>
-          </tr>
-        `;
+      tbody.innerHTML = lista.map((tx) => {
+        const [label, badge] = estadoLabel(tx.estado);
+        const fecha = tx.created_at ? new Date(tx.created_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+        const cripto = tx.pasarela === 'binance';
+        const monto = `${Number(tx.monto || 0).toLocaleString(cripto ? 'en-US' : 'es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cripto ? 'USDT' : 'ARS'}`;
+        const esImagenComprobante = /\.(jpe?g|png|webp)$/i.test(tx.comprobante_path || '');
+        const comprobante = tx.comprobante_url
+          ? `<a href="${escapeHtml(tx.comprobante_url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 font-semibold text-[#FFC600] underline underline-offset-2">${esImagenComprobante ? `<img src="${escapeHtml(tx.comprobante_url)}" alt="Vista previa del comprobante" class="h-10 w-10 rounded-lg border border-zinc-700 object-cover">` : ''}<span>Ver comprobante</span></a>`
+          : tx.payment_id
+            ? `<span class="font-mono text-xs text-zinc-400" title="${escapeHtml(tx.payment_id)}">${escapeHtml(tx.payment_id.slice(0, 18))}</span>`
+            : '<span class="text-zinc-600">Sin adjunto</span>';
+        const acciones = tx.estado === 'pending'
+          ? `<div class="flex justify-end gap-2"><button data-id="${escapeHtml(tx.id)}" data-state="approved" class="state-button rounded-lg bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20">Aprobar</button><button data-id="${escapeHtml(tx.id)}" data-state="rejected" class="state-button rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-400 hover:border-red-500/40 hover:text-red-300">Rechazar</button></div>`
+          : '<span class="block text-right text-xs text-zinc-600">—</span>';
+        return `<tr>
+          <td class="px-5 py-4 whitespace-nowrap text-xs text-zinc-400">${escapeHtml(fecha)}</td>
+          <td class="px-5 py-4"><div class="font-semibold text-zinc-200">${escapeHtml(tx.titulo || 'Pago')}</div><div class="mt-1 text-[11px] uppercase tracking-wider ${cripto ? 'text-[#FFC600]' : 'text-sky-300'}">${cripto ? 'USDT' : 'Mercado Pago'}</div></td>
+          <td class="px-5 py-4 whitespace-nowrap font-semibold text-white">${escapeHtml(monto)}</td>
+          <td class="px-5 py-4">${comprobante}</td>
+          <td class="px-5 py-4"><span class="rounded-md border px-2.5 py-1 text-xs font-semibold ${badge}">${escapeHtml(label)}</span></td>
+          <td class="px-5 py-4">${acciones}</td>
+        </tr>`;
       }).join('');
 
-      // Actualizar tarjetas de métricas
-      document.getElementById('statMontoARS').innerText = '\$' + totalARS.toLocaleString('es-AR') + ' ARS';
-      document.getElementById('statMontoUSDT').innerText = totalUSDT.toFixed(2) + ' USDT';
-      document.getElementById('statComisiones').innerText = '\$' + totalComisiones.toLocaleString('es-AR') + ' ARS';
-      document.getElementById('statTotalVentas').innerText = transaccionesTotales.length;
+      tbody.querySelectorAll('.state-button').forEach((button) => {
+        button.addEventListener('click', () => actualizarEstado(button.dataset.id, button.dataset.state));
+      });
     }
 
-    document.getElementById('btnRefresh').addEventListener('click', obtenerTransacciones);
-    window.addEventListener('DOMContentLoaded', obtenerTransacciones);
+    async function actualizarEstado(id, estado) {
+      if (!window.confirm(`¿Quieres ${estado === 'approved' ? 'aprobar' : 'rechazar'} este pago?`)) return;
+      try {
+        await api(`/api/transacciones/${encodeURIComponent(id)}/estado`, {
+          method: 'PATCH',
+          body: JSON.stringify({ estado }),
+        });
+        await cargarTransacciones();
+      } catch (error) {
+        mostrarErrorGlobal(error);
+      }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const errorElement = document.getElementById('loginError');
+      errorElement.classList.add('hidden');
+      try {
+        const response = await fetch('/api/dashboard/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('loginEmail').value,
+            password: document.getElementById('loginPassword').value,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'No se pudo iniciar sesión');
+        accessToken = data.access_token;
+        clienteId = data.cliente_id;
+        sessionStorage.setItem(tokenKey, accessToken);
+        sessionStorage.setItem(tenantKey, clienteId);
+        mostrarDashboard();
+      } catch (error) {
+        errorElement.textContent = error instanceof Error ? error.message : 'Error de conexión';
+        errorElement.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('settingsForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const payload = Object.fromEntries(new FormData(form).entries());
+      payload.cotizacion_usd_ars = Number(payload.cotizacion_usd_ars);
+      try {
+        await api(`/api/config/${encodeURIComponent(clienteId)}`, { method: 'PUT', body: JSON.stringify(payload) });
+        mostrarMensaje(document.getElementById('settingsMessage'), 'Configuración guardada.');
+      } catch (error) {
+        mostrarMensaje(document.getElementById('settingsMessage'), error.message, true);
+      }
+    });
+
+    document.querySelectorAll('.upload-qr').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const red = button.dataset.qr;
+        const fileInput = document.getElementById(red === 'trc20' ? 'qrTrc20File' : 'qrBep20File');
+        const file = fileInput.files[0];
+        if (!file) {
+          mostrarMensaje(document.getElementById('settingsMessage'), 'Selecciona primero una imagen QR.', true);
+          return;
+        }
+        const formData = new FormData();
+        formData.append('qr', file);
+        try {
+          const result = await api(`/api/config/${encodeURIComponent(clienteId)}/qr/${red}`, {
+            method: 'PUT',
+            body: formData,
+          });
+          document.getElementById('settingsForm').elements[`qr_${red}_url`].value = result.qr_url;
+          fileInput.value = '';
+          mostrarMensaje(document.getElementById('settingsMessage'), `QR ${red.toUpperCase()} actualizado.`);
+        } catch (error) {
+          mostrarMensaje(document.getElementById('settingsMessage'), error.message, true);
+        }
+      });
+    });
+
+    document.getElementById('productForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const payload = Object.fromEntries(new FormData(form).entries());
+      payload.precio_ars = Number(payload.precio_ars);
+      payload.precio_usd = Number(payload.precio_usd);
+      try {
+        await api('/api/productos', { method: 'POST', body: JSON.stringify(payload) });
+        form.reset();
+        mostrarMensaje(document.getElementById('productMessage'), 'Producto creado y listo para vender.');
+        await cargarProductos();
+      } catch (error) {
+        mostrarMensaje(document.getElementById('productMessage'), error.message, true);
+      }
+    });
+
+    document.querySelectorAll('.tab-button').forEach((button) => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.tab-button').forEach((tab) => tab.classList.remove('tab-active'));
+        button.classList.add('tab-active');
+        document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.add('hidden'));
+        document.getElementById(`tab-${button.dataset.tab}`).classList.remove('hidden');
+      });
+    });
+    document.getElementById('transactionFilter').addEventListener('change', renderizarTransacciones);
+    document.getElementById('refreshButton').addEventListener('click', () => cargarDashboard().catch(mostrarErrorGlobal));
+    document.getElementById('logoutButton').addEventListener('click', cerrarSesion);
+
+    if (accessToken && clienteId) mostrarDashboard();
   </script>
 </body>
 </html>

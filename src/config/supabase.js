@@ -3,10 +3,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('⚠️ Falta configurar SUPABASE_URL o SUPABASE_KEY en el .env');
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  throw new Error('Falta configurar SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en el entorno');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);

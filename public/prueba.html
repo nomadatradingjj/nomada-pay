@@ -159,7 +159,7 @@
         </div>
         
         <div class="text-left space-y-1">
-          <span class="text-[10px] text-zinc-400 uppercase font-semibold">Enviar exactamente: <strong class="text-amber-400 text-xs">15.00 USDT</strong></span>
+          <span class="text-[10px] text-zinc-400 uppercase font-semibold">Enviar exactamente: <strong id="usdtAmount" class="text-amber-400 text-xs">15.00 USDT</strong></span>
           <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl p-2.5">
             <input id="walletAddress" type="text" readonly class="bg-transparent text-xs font-mono text-zinc-300 w-full focus:outline-none" value="Cargando..." />
             <button id="btnCopiar" onclick="copiarWallet()" class="bg-amber-500 hover:bg-amber-600 text-black text-xs font-bold px-3 py-1.5 rounded-lg shrink-0 cursor-pointer">Copiar</button>
@@ -171,6 +171,8 @@
       <div class="space-y-2">
         <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">2. Pegá el Hash / TxID del comprobante</label>
         <input id="inputTxID" type="text" placeholder="Ej: 0x8f12... ó 7a91b..." class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:border-amber-500 focus:outline-none" />
+        <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">Adjuntar comprobante (opcional)</label>
+        <input id="inputComprobante" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-xs text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-500 file:px-3 file:py-2 file:font-bold file:text-black" />
         
         <button id="btnConfirmarUSDT" class="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-extrabold py-3.5 rounded-xl text-sm transition hover:opacity-95 cursor-pointer mt-2">
           Confirmar Pago USDT
@@ -182,17 +184,20 @@
 
   <script>
     let walletsDisponibles = { trc20: '', bep20: '' };
+    let qrDisponibles = { trc20: '', bep20: '' };
+    let productoCheckout = null;
     let redSeleccionada = 'trc20';
     const queryParams = new URLSearchParams(window.location.search);
     const productoId = queryParams.get('producto_id');
-    if (productoId) document.getElementById('btnUSDT').classList.add('hidden');
+    if (productoId) document.getElementById('inputComprobante').required = true;
 
     async function cargarProducto() {
       if (!productoId) return;
       try {
-        const response = await fetch(`/api/productos/${encodeURIComponent(productoId)}`);
+        const response = await fetch(`/api/producto/${encodeURIComponent(productoId)}`);
         const producto = await response.json();
         if (!response.ok) throw new Error(producto.error || 'No se pudo cargar el producto');
+        productoCheckout = producto;
         document.getElementById('productTitle').textContent = producto.titulo;
         const precioFormateado = new Intl.NumberFormat('es-AR', {
           style: 'currency',
@@ -201,7 +206,15 @@
         document.getElementById('productPrice').textContent = precioFormateado;
         document.getElementById('checkoutSubtotal').textContent = `${precioFormateado} ARS`;
         document.getElementById('checkoutTotal').textContent = `${precioFormateado} ARS`;
-        document.getElementById('productUsdPrice').classList.add('hidden');
+        document.getElementById('btnPagar').classList.toggle('hidden', Number(producto.precio_ars) <= 0);
+        document.getElementById('btnUSDT').classList.toggle('hidden', Number(producto.precio_usd) <= 0);
+        if (Number(producto.precio_usd) > 0) {
+          document.getElementById('productUsdPrice').textContent = `o ${Number(producto.precio_usd).toFixed(2)} USDT`;
+          document.getElementById('productUsdPrice').classList.remove('hidden');
+          document.getElementById('usdtAmount').textContent = `${Number(producto.precio_usd).toFixed(2)} USDT`;
+        } else {
+          document.getElementById('productUsdPrice').classList.add('hidden');
+        }
       } catch (error) {
         console.error('Error al cargar el ebook:', error);
       }
@@ -232,8 +245,9 @@
             link.href = data.download_url;
             link.classList.remove('hidden');
             link.classList.add('inline-flex');
+            link.textContent = 'Acceder al contenido';
             document.getElementById('paymentResultMessage').textContent =
-              'Tu pago fue confirmado. El enlace seguro estará disponible durante 24 horas.';
+              'Tu pago fue confirmado. Ya puedes acceder al contenido adquirido.';
             return;
           }
           if (response.status !== 202) {
@@ -257,10 +271,12 @@
 
     async function cargarBilleteras() {
       try {
-        const res = await fetch('/api/usdt-wallets');
+        const clienteId = productoCheckout?.tienda_id || 'default';
+        const res = await fetch(`/api/usdt-wallets?cliente_id=${encodeURIComponent(clienteId)}`);
         const data = await res.json();
         if (data.wallets) {
           walletsDisponibles = data.wallets;
+          qrDisponibles = data.qr || qrDisponibles;
           seleccionarRed('trc20');
         }
       } catch (err) {
@@ -285,11 +301,13 @@
       const addr = walletsDisponibles[red] || 'No configurada';
       document.getElementById('walletAddress').value = addr;
 
-      // Carga la imagen de tu QR guardada en public/images/qr-trc20.png o qr-bep20.png
       const qrImg = document.getElementById('qrImg');
-      qrImg.src = `/images/qr-${red}.png`;
-      // Si la imagen PNG local no existe, genera el QR automáticamente como respaldo
+      qrImg.src = qrDisponibles[red] || `/images/qr-${red}.png`;
       qrImg.onerror = () => {
+        if (qrImg.src !== `/images/qr-${red}.png`) {
+          qrImg.src = `/images/qr-${red}.png`;
+          return;
+        }
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(addr)}`;
       };
     }
@@ -319,27 +337,42 @@
         alert("Por favor pegá el Hash o TxID del comprobante de transferencia.");
         return;
       }
+      if (productoId && !document.getElementById('inputComprobante').files[0]) {
+        alert("Adjuntá el comprobante de transferencia para continuar.");
+        return;
+      }
 
       const btn = document.getElementById('btnConfirmarUSDT');
       btn.disabled = true;
       btn.innerText = "Registrando Pago...";
 
       try {
+        const formData = new FormData();
+        formData.append('titulo', productoCheckout?.titulo || 'Ebook Nómada Pay');
+        formData.append('precio', String(productoCheckout?.precio_usd || 15));
+        formData.append('red', redSeleccionada);
+        formData.append('txid', txid);
+        if (productoId) formData.append('producto_id', productoId);
+        const comprobante = document.getElementById('inputComprobante').files[0];
+        if (comprobante) formData.append('comprobante', comprobante);
+
         const res = await fetch('/api/registrar-pago-usdt', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            titulo: 'Ebook Nómada Pay',
-            precio: 15,
-            red: redSeleccionada,
-            txid: txid
-          })
+          body: formData
         });
 
         const data = await res.json();
         if (data.status === 'success') {
-          alert("¡Pago registrado con éxito! Quedó asentado en el Dashboard para verificación.");
-          window.location.href = "/dashboard.html";
+          document.getElementById('modalUSDT').classList.add('hidden');
+          if (productoId) {
+            const retorno = new URL('/prueba.html', window.location.origin);
+            retorno.searchParams.set('producto_id', productoId);
+            retorno.searchParams.set('payment_id', txid);
+            retorno.searchParams.set('status', 'success');
+            window.location.assign(retorno.href);
+          } else {
+            alert("¡Pago registrado! El equipo verificará el comprobante y actualizará el estado de tu compra.");
+          }
         } else {
           alert("Error: " + data.error);
           btn.disabled = false;
@@ -365,8 +398,8 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            titulo: 'Ebook Nómada Pay',
-            precio: 10,
+            titulo: productoCheckout?.titulo || 'Ebook Nómada Pay',
+            precio: productoCheckout?.precio_ars || 10,
             comisionPorcentaje: 0.015,
             ...(productoId && { producto_id: productoId })
           })

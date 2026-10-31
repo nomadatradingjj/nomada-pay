@@ -2,9 +2,20 @@ import { Router } from 'express';
 import { crearCobro } from '../controllers/paymentController.js';
 import { recibirWebhookMP } from '../controllers/webhookController.js';
 import { obtenerBilleteras, registrarPagoUSDT } from '../controllers/usdtController.js';
-import { supabase } from '../config/supabase.js';
 import multer from 'multer';
-import { crearProducto, obtenerDescargaAprobada, obtenerProducto } from '../controllers/productController.js';
+import {
+  cambiarEstadoTransaccion,
+  crearProducto,
+  getConfiguracion,
+  listarProductos,
+  listarTransacciones,
+  obtenerDescargaAprobada,
+  obtenerProducto,
+  subirQrPago,
+  updateConfiguracion,
+} from '../controllers/productController.js';
+import { iniciarSesionDashboard } from '../controllers/dashboardAuthController.js';
+import { requireDashboardAuth, validarAlcanceCliente } from '../middleware/requireDashboardAuth.js';
 
 const router = Router();
 const uploadPdf = multer({
@@ -26,61 +37,70 @@ const manejarCargaPdf = (req, res, next) => {
     return next();
   });
 };
+const uploadComprobante = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, callback) => {
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!tiposPermitidos.includes(file.mimetype)) {
+      return callback(new Error('El comprobante debe ser una imagen JPG, PNG, WebP o un PDF'));
+    }
+    return callback(null, true);
+  },
+});
+const manejarCargaComprobante = (req, res, next) => {
+  uploadComprobante.single('comprobante')(req, res, (error) => {
+    if (error) {
+      const status = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+      return res.status(status).json({ error: error.message });
+    }
+    return next();
+  });
+};
+const uploadQr = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, callback) => {
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!tiposPermitidos.includes(file.mimetype)) {
+      return callback(new Error('El QR debe ser una imagen JPG, PNG o WebP'));
+    }
+    return callback(null, true);
+  },
+});
+const manejarCargaQr = (req, res, next) => {
+  uploadQr.single('qr')(req, res, (error) => {
+    if (error) {
+      const status = error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+      return res.status(status).json({ error: error.message });
+    }
+    return next();
+  });
+};
+
+// Dashboard authentication and tenant-scoped management
+router.post('/dashboard/login', iniciarSesionDashboard);
+router.get('/config/:clienteId?', requireDashboardAuth, validarAlcanceCliente, getConfiguracion);
+router.put('/config/:clienteId?', requireDashboardAuth, validarAlcanceCliente, updateConfiguracion);
+router.put('/config/:clienteId/qr/:red', requireDashboardAuth, validarAlcanceCliente, manejarCargaQr, subirQrPago);
+router.get('/productos/:clienteId?', requireDashboardAuth, validarAlcanceCliente, listarProductos);
+router.post('/productos', requireDashboardAuth, validarAlcanceCliente, manejarCargaPdf, crearProducto);
+router.get('/transacciones/:clienteId?', requireDashboardAuth, validarAlcanceCliente, listarTransacciones);
+router.patch('/transacciones/:id/estado', requireDashboardAuth, cambiarEstadoTransaccion);
+router.get('/historial-transacciones', requireDashboardAuth, listarTransacciones);
+router.post('/cambiar-estado-transaccion', requireDashboardAuth, cambiarEstadoTransaccion);
 
 // Mercado Pago
 router.post('/crear-cobro', crearCobro);
 router.post('/webhooks/mercadopago', recibirWebhookMP);
 
 // Ebooks
-router.post('/productos/crear', manejarCargaPdf, crearProducto);
-router.get('/productos/:id', obtenerProducto);
 router.get('/productos/descarga/:paymentId', obtenerDescargaAprobada);
+router.get('/producto/:id', obtenerProducto);
+router.post('/productos/crear', requireDashboardAuth, validarAlcanceCliente, manejarCargaPdf, crearProducto);
 
 // USDT Multired
 router.get('/usdt-wallets', obtenerBilleteras);
-router.post('/registrar-pago-usdt', registrarPagoUSDT);
-
-// Dashboard B2B - Historial de Transacciones
-router.get('/historial-transacciones', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('transacciones')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) return res.status(500).json({ error: error.message });
-    return res.json(data);
-  } catch (err) {
-    return res.status(500).json({ error: 'Error al consultar Supabase' });
-  }
-});
-
-// Cambiar estado de transacción (Aprobar / Rechazar)
-router.post('/cambiar-estado-transaccion', async (req, res) => {
-  try {
-    const { id, estado } = req.body;
-
-    if (!id || !estado) {
-      return res.status(400).json({ error: 'Faltan parámetros: id y estado' });
-    }
-
-    const { data, error } = await supabase
-      .from('transacciones')
-      .update({ estado: estado })
-      .eq('id', id)
-      .select();
-
-    if (error) {
-      console.error('⚠️ Error al actualizar estado en Supabase:', error.message);
-      return res.status(500).json({ error: error.message });
-    }
-
-    console.log(`✅ Transacción ${id} actualizada a: ${estado}`);
-    return res.json({ status: 'success', data: data[0] });
-  } catch (err) {
-    console.error('Error interno al cambiar estado:', err);
-    return res.status(500).json({ error: 'Error interno al actualizar la transacción' });
-  }
-});
+router.post('/registrar-pago-usdt', manejarCargaComprobante, registrarPagoUSDT);
 
 export default router;

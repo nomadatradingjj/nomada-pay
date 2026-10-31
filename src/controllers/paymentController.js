@@ -13,13 +13,17 @@ export const crearCobro = async (req, res) => {
       plan_id: planId,
     } = req.body;
     let { titulo, precio } = req.body;
+    const idCliente = req.user?.cliente_id || req.user?.tienda_id || 'default';
+    let clientePagoId = idCliente;
 
     if (productoId) {
-      const { data: producto, error: productoError } = await supabase
-        .from('productos')
-        .select('titulo, precio_ars')
+      let productoQuery = supabase
+        .from('productos_digitales')
+        .select('titulo, precio_ars, tienda_id')
         .eq('id', productoId)
-        .single();
+        .eq('activo', true);
+      if (req.user) productoQuery = productoQuery.eq('tienda_id', idCliente);
+      const { data: producto, error: productoError } = await productoQuery.single();
 
       if (productoError || !producto) {
         return res.status(404).json({ error: 'Producto no encontrado' });
@@ -27,6 +31,7 @@ export const crearCobro = async (req, res) => {
 
       titulo = producto.titulo;
       precio = producto.precio_ars;
+      clientePagoId = producto.tienda_id || idCliente;
     }
 
     const precioNumerico = Number(precio);
@@ -73,7 +78,7 @@ export const crearCobro = async (req, res) => {
         pending: originUrl,
       },
       auto_return: 'approved',
-      external_reference: planId,
+      ...(planId || productoId ? { external_reference: String(planId || productoId) } : {}),
     };
 
     // Solo agregar notification_url si tenemos una dirección HTTPS válida
@@ -102,6 +107,8 @@ export const crearCobro = async (req, res) => {
         .insert([
           {
             preference_id: response.id,
+            cliente_id: clientePagoId,
+            producto_id: productoId || null,
             titulo: titulo.trim(),
             monto: precioNumerico,
             comision: marketplaceFee,

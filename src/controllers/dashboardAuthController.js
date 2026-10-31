@@ -1,5 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
+export const getSupabasePublicConfig = (req, res) => {
+  const { SUPABASE_URL: supabaseUrl, SUPABASE_ANON_KEY: supabaseAnonKey } = process.env;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('Falta configurar SUPABASE_URL o SUPABASE_ANON_KEY para el dashboard');
+    return res.status(503).json({ error: 'La autenticación no está configurada' });
+  }
+
+  return res.json({ supabaseUrl, supabaseAnonKey });
+};
+
 export const iniciarSesionDashboard = async (req, res) => {
   const { email, password } = req.body || {};
   const supabaseUrl = process.env.SUPABASE_URL;

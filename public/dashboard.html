@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#09090B">
   <title>NÓMADA PAY | Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,7 +25,7 @@
 <body class="min-h-screen text-zinc-100 antialiased">
   <section id="loginScreen" class="min-h-screen flex items-center justify-center px-4 py-10">
     <form id="loginForm" class="panel w-full max-w-md rounded-3xl p-8 shadow-2xl shadow-black/40">
-      <div class="brand text-sm font-extrabold tracking-[.22em] text-white">NÓMADA <span class="gold">PAY</span></div>
+      <div class="brand gold text-sm font-extrabold tracking-[.22em]">NÓMADA PAY</div>
       <h1 class="mt-8 text-2xl font-bold">Acceso al dashboard</h1>
       <p class="mt-2 text-sm text-zinc-400">Inicia sesión con tu cuenta de Supabase para administrar tu pasarela.</p>
       <label class="mt-7 block text-xs font-semibold uppercase tracking-wider text-zinc-400" for="loginEmail">Email</label>
@@ -40,12 +41,12 @@
     <header class="sticky top-0 z-30 border-b border-zinc-800 bg-[#09090B]/90 backdrop-blur-xl">
       <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <div>
-          <div class="brand text-sm font-extrabold tracking-[.22em] text-white">NÓMADA <span class="gold">PAY</span></div>
+          <div class="brand gold text-sm font-extrabold tracking-[.22em]">NÓMADA PAY</div>
           <p class="mt-1 text-[11px] text-zinc-500">PANEL DE COMERCIO <span class="px-1">·</span> <span id="tenantLabel"></span></p>
         </div>
         <div class="flex items-center gap-2">
           <button id="refreshButton" class="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">Actualizar</button>
-          <button id="logoutButton" class="rounded-xl border border-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:text-white">Salir</button>
+          <button id="logoutButton" class="rounded-xl border border-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:text-white">Cerrar Sesión</button>
         </div>
       </div>
     </header>
@@ -55,7 +56,7 @@
         <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
           <div>
             <p class="gold text-xs font-bold uppercase tracking-[.2em]">Resumen de tu negocio</p>
-            <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-white">Centro de operaciones</h1>
+            <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-white">Métricas &amp; Flujo de Caja</h1>
           </div>
           <p id="lastUpdated" class="text-xs text-zinc-500"></p>
         </div>
@@ -84,12 +85,12 @@
       </section>
 
       <nav class="flex gap-2 overflow-x-auto border-b border-zinc-800" aria-label="Secciones del dashboard">
-        <button class="tab-button tab-active whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold text-zinc-400 transition" data-tab="settings">Ajustes de Pasarela</button>
-        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="products">Creador de Productos</button>
-        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="transactions">Auditoría de Ventas</button>
+        <button class="tab-button tab-active whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold text-zinc-400 transition" data-tab="transactions">Transacciones</button>
+        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="settings">Pasarela (Wallets &amp; QRs)</button>
+        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="products">E-books &amp; Infoproductos</button>
       </nav>
 
-      <section id="tab-settings" class="tab-panel">
+      <section id="tab-settings" class="tab-panel hidden">
         <div class="panel rounded-2xl p-5 sm:p-7">
           <div class="mb-6">
             <h2 class="text-xl font-bold">Ajustes de Pasarela</h2>
@@ -171,19 +172,26 @@
         </div>
       </section>
 
-      <section id="tab-transactions" class="tab-panel hidden">
+      <section id="tab-transactions" class="tab-panel">
         <div class="panel overflow-hidden rounded-2xl">
           <div class="flex flex-col justify-between gap-3 border-b border-zinc-800 px-5 py-5 sm:flex-row sm:items-center">
             <div>
               <h2 class="text-xl font-bold">Auditoría de Ventas</h2>
               <p class="mt-1 text-sm text-zinc-500">Revisa pagos, comprobantes y estado de acreditación.</p>
             </div>
-            <select id="transactionFilter" class="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300">
-              <option value="all">Todos los pagos</option>
-              <option value="pending">Pendientes</option>
-              <option value="approved">Aprobados</option>
-              <option value="rejected">Rechazados</option>
-            </select>
+            <div class="flex flex-wrap gap-2">
+              <select id="gatewayFilter" aria-label="Filtrar por pasarela" class="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300">
+                <option value="all">Todas las pasarelas</option>
+                <option value="mercadopago">Mercado Pago</option>
+                <option value="usdt">USDT</option>
+              </select>
+              <select id="transactionFilter" aria-label="Filtrar por estado" class="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300">
+                <option value="all">Todos los estados</option>
+                <option value="pending">Pendientes</option>
+                <option value="approved">Aprobados</option>
+                <option value="rejected">Rechazados</option>
+              </select>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full min-w-[900px] text-left text-sm">
@@ -202,10 +210,9 @@
   </div>
 
   <script>
-    const tokenKey = 'nomada_dashboard_access_token';
-    const tenantKey = 'nomada_dashboard_cliente_id';
-    let accessToken = sessionStorage.getItem(tokenKey);
-    let clienteId = sessionStorage.getItem(tenantKey);
+    let supabaseClient;
+    let clienteId = 'default';
+    let displayedUserId;
     let transacciones = [];
     let productos = [];
 
@@ -215,12 +222,15 @@
 
     const api = async (path, options = {}) => {
       const headers = new Headers(options.headers || {});
-      if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) throw new Error('Tu sesión expiró. Inicia sesión otra vez.');
+      headers.set('Authorization', 'Bearer ' + session.access_token);
       if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
       const response = await fetch(path, { ...options, headers });
       const payload = await response.json().catch(() => ({}));
       if (response.status === 401) {
-        cerrarSesion();
+        await supabaseClient.auth.signOut();
         throw new Error(payload.error || 'La sesión expiró. Inicia sesión otra vez.');
       }
       if (!response.ok) throw new Error(payload.error || 'No se pudo completar la solicitud');
@@ -232,19 +242,25 @@
       element.className = `text-sm ${isError ? 'text-red-400' : 'text-emerald-400'}`;
     };
 
-    function cerrarSesion() {
-      sessionStorage.removeItem(tokenKey);
-      sessionStorage.removeItem(tenantKey);
-      accessToken = null;
-      clienteId = null;
+    function mostrarLogin(error = '') {
+      displayedUserId = null;
       document.getElementById('dashboardApp').classList.add('hidden');
       document.getElementById('loginScreen').classList.remove('hidden');
+      const errorElement = document.getElementById('loginError');
+      errorElement.textContent = error;
+      errorElement.classList.toggle('hidden', !error);
     }
 
-    function mostrarDashboard() {
+    function mostrarDashboard(session) {
+      clienteId = session.user.app_metadata?.cliente_id
+        || session.user.app_metadata?.tienda_id
+        || session.user.id
+        || 'default';
+      if (displayedUserId === session.user.id) return;
+      displayedUserId = session.user.id;
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('dashboardApp').classList.remove('hidden');
-      document.getElementById('tenantLabel').textContent = clienteId || 'Cuenta';
+      document.getElementById('tenantLabel').textContent = session.user.email || clienteId;
       cargarDashboard().catch(mostrarErrorGlobal);
     }
 
@@ -317,6 +333,7 @@
 
     function renderizarTransacciones() {
       const filtro = document.getElementById('transactionFilter').value;
+      const pasarelaFiltro = document.getElementById('gatewayFilter').value;
       const tbody = document.getElementById('transactionsTable');
       const aprobadas = transacciones.filter((item) => item.estado === 'approved');
       const totalArs = aprobadas.filter((item) => item.pasarela !== 'binance').reduce((total, item) => total + Number(item.monto || 0), 0);
@@ -327,7 +344,14 @@
       document.getElementById('metricPending').textContent = String(transacciones.filter((item) =>
         item.estado === 'pending' && (item.pasarela === 'binance' || item.comprobante_path),
       ).length);
-      const lista = filtro === 'all' ? transacciones : transacciones.filter((item) => item.estado === filtro);
+      const lista = transacciones.filter((item) => {
+        const coincideEstado = filtro === 'all' || item.estado === filtro;
+        const esUsdt = item.pasarela === 'binance';
+        const coincidePasarela = pasarelaFiltro === 'all'
+          || (pasarelaFiltro === 'usdt' && esUsdt)
+          || (pasarelaFiltro === 'mercadopago' && !esUsdt);
+        return coincideEstado && coincidePasarela;
+      });
 
       if (!lista.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-zinc-500">No hay ventas para mostrar.</td></tr>';
@@ -381,21 +405,13 @@
       const errorElement = document.getElementById('loginError');
       errorElement.classList.add('hidden');
       try {
-        const response = await fetch('/api/dashboard/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: document.getElementById('loginEmail').value,
             password: document.getElementById('loginPassword').value,
-          }),
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'No se pudo iniciar sesión');
-        accessToken = data.access_token;
-        clienteId = data.cliente_id;
-        sessionStorage.setItem(tokenKey, accessToken);
-        sessionStorage.setItem(tenantKey, clienteId);
-        mostrarDashboard();
+        if (error) throw error;
+        if (!data.session) throw new Error('Supabase no devolvió una sesión válida');
+        mostrarDashboard(data.session);
       } catch (error) {
         errorElement.textContent = error instanceof Error ? error.message : 'Error de conexión';
         errorElement.classList.remove('hidden');
@@ -465,10 +481,53 @@
       });
     });
     document.getElementById('transactionFilter').addEventListener('change', renderizarTransacciones);
+    document.getElementById('gatewayFilter').addEventListener('change', renderizarTransacciones);
     document.getElementById('refreshButton').addEventListener('click', () => cargarDashboard().catch(mostrarErrorGlobal));
-    document.getElementById('logoutButton').addEventListener('click', cerrarSesion);
+    document.getElementById('logoutButton').addEventListener('click', async () => {
+      try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        mostrarLogin();
+      } catch (error) {
+        mostrarErrorGlobal(error);
+      }
+    });
 
-    if (accessToken && clienteId) mostrarDashboard();
+    async function inicializarAutenticacion() {
+      try {
+        const response = await fetch('/api/dashboard/public-config');
+        const config = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(config.error || 'No se pudo cargar la configuración de Supabase');
+        if (!window.supabase?.createClient) throw new Error('No se pudo cargar el SDK de Supabase');
+
+        supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+          auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true,
+          },
+        });
+
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        if (data.session) mostrarDashboard(data.session);
+        else mostrarLogin();
+
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+          setTimeout(() => {
+            if (session) mostrarDashboard(session);
+            else {
+              clienteId = 'default';
+              mostrarLogin();
+            }
+          }, 0);
+        });
+      } catch (error) {
+        mostrarLogin(error instanceof Error ? error.message : 'No se pudo inicializar la sesión');
+      }
+    }
+
+    inicializarAutenticacion();
   </script>
 </body>
 </html>

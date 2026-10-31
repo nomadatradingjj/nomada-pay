@@ -14,7 +14,7 @@ import {
   subirQrPago,
   updateConfiguracion,
 } from '../controllers/productController.js';
-import { iniciarSesionDashboard } from '../controllers/dashboardAuthController.js';
+import { getSupabasePublicConfig, iniciarSesionDashboard } from '../controllers/dashboardAuthController.js';
 import { requireDashboardAuth, validarAlcanceCliente } from '../middleware/requireDashboardAuth.js';
 
 const router = Router();
@@ -79,6 +79,7 @@ const manejarCargaQr = (req, res, next) => {
 };
 
 // Dashboard authentication and tenant-scoped management
+router.get('/dashboard/public-config', getSupabasePublicConfig);
 router.post('/dashboard/login', iniciarSesionDashboard);
 router.get('/config/:clienteId?', requireDashboardAuth, validarAlcanceCliente, getConfiguracion);
 router.put('/config/:clienteId?', requireDashboardAuth, validarAlcanceCliente, updateConfiguracion);

@@ -400,7 +400,6 @@
           body: JSON.stringify({
             titulo: productoCheckout?.titulo || 'Ebook Nómada Pay',
             precio: productoCheckout?.precio_ars || 10,
-            comisionPorcentaje: 0.015,
             ...(productoId && { producto_id: productoId })
           })
         });

@@ -197,7 +197,7 @@
         <section id="view-conversion" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Optimización</p><h2 class="mt-2 font-display text-2xl font-bold">Métricas de conversión</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="chart-no-axes-combined" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Falta conectar analítica de visitas</p><p class="mx-auto mt-2 max-w-md text-xs leading-5 text-zinc-600">Se muestran las ventas confirmadas. La tasa de conversión requiere eventos de visitas y checkouts iniciados, que hoy no recopila la API.</p></div></section>
         <section id="view-abandonment" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Optimización</p><h2 class="mt-2 font-display text-2xl font-bold">Tasa de abandono</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="chart-no-axes-column-increasing" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Sin eventos de abandono</p><p class="mt-2 text-xs text-zinc-600">No calculamos tasas a partir de ventas únicamente para evitar métricas engañosas.</p></div></section>
         <section id="view-tests" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Optimización</p><h2 class="mt-2 font-display text-2xl font-bold">Tests A/B</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="flask-conical" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Experimentación próximamente</p><p class="mt-2 text-xs text-zinc-600">Las variantes y su medición requieren instrumentar eventos en las páginas de checkout.</p></div></section>
-        <section id="view-account" class="page-view hidden space-y-5"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Preferencias</p><h2 class="mt-2 font-display text-2xl font-bold">Configuración de cuenta</h2></div><div class="glass rounded-2xl p-5 sm:p-7"><p class="text-xs text-zinc-500">Sesión autenticada con Supabase</p><p id="accountEmail" class="mt-2 text-sm font-semibold text-zinc-200"></p><p class="mt-1 text-[10px] text-zinc-600">ID del comercio</p><code id="accountTenant" class="mt-1 block break-all text-xs text-[#FFD84D]"></code><button class="logout-action mt-6 rounded-xl border border-red-500/20 px-4 py-2.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/[.08]">Cerrar sesión en este dispositivo</button></div></section>
+        <section id="view-account" class="page-view hidden space-y-5"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Preferencias</p><h2 class="mt-2 font-display text-2xl font-bold">Configuración de cuenta</h2></div><div class="grid gap-4 lg:grid-cols-2"><article class="glass rounded-2xl p-5 sm:p-7"><div class="flex items-start justify-between gap-4"><div><p class="text-[10px] font-bold uppercase tracking-[.14em] text-zinc-500">Suscripción</p><h3 class="mt-2 font-display text-lg font-bold">Plan activo</h3></div><span class="grid h-10 w-10 place-items-center rounded-xl bg-[#FFC600]/10 text-[#FFD84D]"><i data-lucide="gem" class="h-5 w-5"></i></span></div><form id="planForm" class="mt-5 space-y-4"><label class="block text-xs font-medium text-zinc-300">Selecciona tu plan<select id="planTier" name="plan_tier" class="field mt-2"><option value="starter">Starter · 3,5%</option><option value="pro">Pro · 2,5%</option><option value="scale">Scale · 1%</option></select></label><p id="planDescription" class="text-[10px] leading-5 text-zinc-500">La comisión se calcula sobre cada venta y se registra al confirmar el pago.</p><div class="flex flex-col gap-3 sm:flex-row sm:items-center"><button id="savePlanButton" class="gold-button rounded-xl px-5 py-3 text-xs font-bold transition" type="submit">Guardar plan</button><p id="planMessage" class="text-xs text-zinc-500" role="status"></p></div></form><div class="mt-6 rounded-xl border border-[#FFC600]/10 bg-[#FFC600]/[.035] p-4"><p class="text-[10px] uppercase tracking-[.12em] text-zinc-500">Comisiones retenidas este mes</p><p id="accountMonthlyCommissions" class="mt-2 font-display text-2xl font-extrabold text-[#FFD84D]">$ 0</p><p class="mt-1 text-[9px] text-zinc-600">Solo pagos aprobados · convertido a ARS</p></div></article><article class="glass rounded-2xl p-5 sm:p-7"><p class="text-xs text-zinc-500">Sesión autenticada con Supabase</p><p id="accountEmail" class="mt-2 text-sm font-semibold text-zinc-200"></p><p class="mt-1 text-[10px] text-zinc-600">ID del comercio</p><code id="accountTenant" class="mt-1 block break-all text-xs text-[#FFD84D]"></code><button class="logout-action mt-6 rounded-xl border border-red-500/20 px-4 py-2.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/[.08]">Cerrar sesión en este dispositivo</button></article></div></section>
         <section id="view-integrations" class="page-view hidden space-y-5"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Conexiones</p><h2 class="mt-2 font-display text-2xl font-bold">Integraciones</h2></div><div class="grid gap-3 md:grid-cols-2"><article class="glass rounded-2xl p-5"><div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-300"><i data-lucide="database" class="h-5 w-5"></i></span><div><p class="text-sm font-semibold">Supabase</p><p class="text-[10px] text-zinc-500">Autenticación y datos de comercio</p></div><span class="ml-auto text-[9px] text-emerald-300">Conectado</span></div></article><article class="glass rounded-2xl p-5"><div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-sky-500/10 text-sky-300"><i data-lucide="credit-card" class="h-5 w-5"></i></span><div><p class="text-sm font-semibold">Mercado Pago</p><p class="text-[10px] text-zinc-500">Preferencias y notificaciones</p></div><span class="ml-auto text-[9px] text-zinc-500">Estado no disponible</span></div><p class="mt-4 text-[10px] leading-5 text-zinc-600">La API no expone el estado de conexión de credenciales para proteger secretos.</p></article><article class="glass rounded-2xl p-5 md:col-span-2"><div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-violet-500/10 text-violet-300"><i data-lucide="activity" class="h-5 w-5"></i></span><div><p class="text-sm font-semibold">Analítica de checkout</p><p class="text-[10px] text-zinc-500">Visitantes, países, conversión, carritos y tests A/B</p></div><span class="ml-auto text-[9px] text-zinc-500">Pendiente de instrumentación</span></div></article></div></section>
       </main>
       <footer class="border-t border-white/[.05] px-4 py-5 text-center text-[9px] tracking-wide text-zinc-700 sm:px-7">NÓMADA PAY <span class="px-1">·</span> Tu negocio, sin fronteras</footer>
@@ -230,6 +230,7 @@
     const dinero = (amount, currency = 'ARS') => new Intl.NumberFormat('es-AR', {
       style: 'currency', currency, maximumFractionDigits: 2,
     }).format(Number(amount) || 0);
+    const planCommissionRates = { starter: 3.5, pro: 2.5, scale: 1 };
 
     const api = async (path, options = {}) => {
       const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
@@ -411,7 +412,10 @@
       const todayArs = approvedToday.filter((tx) => tx.pasarela !== 'binance').reduce((sum, tx) => sum + Number(tx.monto || 0), 0);
       const todayUsdt = approvedToday.filter((tx) => tx.pasarela === 'binance').reduce((sum, tx) => sum + Number(tx.monto || 0), 0);
       const monthArs = approvedMonth.reduce((sum, tx) => sum + equivalent(tx), 0);
-      const totalFees = approved.filter((tx) => tx.pasarela !== 'binance').reduce((sum, tx) => sum + Number(tx.comision || 0), 0);
+      const commissionARS = (tx) => Number(tx.comision_monto || 0)
+        * (tx.pasarela === 'binance' ? Number(configuracion.cotizacion_usd_ars || 0) : 1);
+      const totalFees = approved.reduce((sum, tx) => sum + commissionARS(tx), 0);
+      const monthlyCommissions = approvedMonth.reduce((sum, tx) => sum + commissionARS(tx), 0);
       const pending = transacciones.filter((tx) => tx.estado === 'pending' && (tx.pasarela === 'binance' || tx.comprobante_path));
       const average = approved.length ? allArs / approved.length : 0;
       document.getElementById('metricTodayArs').textContent = dinero(todayArs);
@@ -421,6 +425,7 @@
       document.getElementById('monthCount').textContent = `${approvedMonth.length} ventas`;
       document.getElementById('metricNet').textContent = dinero(Math.max(0, allArs - totalFees));
       document.getElementById('metricTicket').textContent = dinero(average);
+      document.getElementById('accountMonthlyCommissions').textContent = dinero(monthlyCommissions);
       document.getElementById('ordersBadge').textContent = String(pending.length);
       document.getElementById('ordersBadge').classList.toggle('hidden', pending.length === 0);
       document.getElementById('lastUpdated').textContent = `Actualizado ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
@@ -532,6 +537,31 @@
       ['wallet_trc20', 'wallet_bep20', 'qr_trc20_url', 'qr_bep20_url', 'cotizacion_usd_ars'].forEach((field) => {
         form.elements[field].value = configuracion[field] ?? '';
       });
+      const planSelector = document.getElementById('planTier');
+      const savePlanButton = document.getElementById('savePlanButton');
+      if (configuracion.plan_tier === 'custom') {
+        if (!planSelector.querySelector('option[value="custom"]')) {
+          planSelector.add(new Option('Custom · sin comisión', 'custom'));
+        }
+        planSelector.value = 'custom';
+        planSelector.disabled = true;
+        savePlanButton.disabled = true;
+      } else {
+        planSelector.value = planCommissionRates[configuracion.plan_tier]
+          ? configuracion.plan_tier
+          : 'starter';
+        planSelector.disabled = false;
+        savePlanButton.disabled = false;
+      }
+      updatePlanDescription();
+    }
+
+    function updatePlanDescription() {
+      const planTier = document.getElementById('planTier').value;
+      const rate = planCommissionRates[planTier];
+      document.getElementById('planDescription').textContent = Number.isFinite(rate)
+        ? `Comisión de ${rate.toLocaleString('es-AR')}% sobre cada venta aprobada.`
+        : 'Plan personalizado administrado por Nómada Pay; no aplica comisión.';
     }
 
     async function loadProducts() {
@@ -683,6 +713,39 @@
         renderOverview();
       } catch (error) { showStatus(document.getElementById('settingsMessage'), error.message, true); }
       finally { button.disabled = false; }
+    });
+
+    document.getElementById('planTier').addEventListener('change', updatePlanDescription);
+    document.getElementById('planForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = document.getElementById('savePlanButton');
+      const planTier = document.getElementById('planTier').value;
+      if (!planCommissionRates[planTier]) {
+        showStatus(document.getElementById('planMessage'), 'El plan personalizado solo puede modificarse desde administración.', true);
+        return;
+      }
+      button.disabled = true;
+      try {
+        const payload = {
+          wallet_trc20: configuracion.wallet_trc20 || '',
+          wallet_bep20: configuracion.wallet_bep20 || '',
+          qr_trc20_url: configuracion.qr_trc20_url || '',
+          qr_bep20_url: configuracion.qr_bep20_url || '',
+          cotizacion_usd_ars: Number(configuracion.cotizacion_usd_ars || 1620),
+          plan_tier: planTier,
+        };
+        const result = await api(`/api/config/${encodeURIComponent(clienteId)}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+        configuracion = Array.isArray(result) ? (result[0] || payload) : (result || payload);
+        showStatus(document.getElementById('planMessage'), `Plan ${planTier[0].toUpperCase()}${planTier.slice(1)} guardado correctamente.`);
+        renderOverview();
+      } catch (error) {
+        showStatus(document.getElementById('planMessage'), error.message, true);
+      } finally {
+        button.disabled = configuracion.plan_tier === 'custom';
+      }
     });
 
     document.querySelectorAll('.upload-qr').forEach((button) => button.addEventListener('click', async () => {

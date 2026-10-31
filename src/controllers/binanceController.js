@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { supabase } from '../config/supabase.js';
+import { calculateCommissionAmount } from '../services/commissionService.js';
 
 function generarFirmaBinance(timestamp, nonce, bodyStr, secretKey) {
   const payload = `${timestamp}\n${nonce}\n${bodyStr}\n`;
@@ -13,6 +14,7 @@ function generarFirmaBinance(timestamp, nonce, bodyStr, secretKey) {
 export const crearCobroBinance = async (req, res) => {
   try {
     const { titulo, precio } = req.body;
+    const clienteId = req.user?.cliente_id || req.user?.tienda_id || 'default';
 
     if (!titulo || !precio) {
       return res.status(400).json({ error: 'Faltan campos obligatorios: titulo o precio' });
@@ -25,6 +27,12 @@ export const crearCobroBinance = async (req, res) => {
       return res.status(500).json({ error: 'Faltan credenciales de Binance Pay en el .env' });
     }
 
+    const monto = Number(precio);
+    if (!Number.isFinite(monto) || monto <= 0) {
+      return res.status(400).json({ error: 'El precio debe ser un número mayor a cero' });
+    }
+    const comisionMonto = await calculateCommissionAmount(clienteId, monto);
+
     const timestamp = Date.now().toString();
     const nonce = crypto.randomBytes(16).toString('hex');
 
@@ -32,7 +40,7 @@ export const crearCobroBinance = async (req, res) => {
     const orderBody = {
       env: { terminalType: 'WEB' },
       merchantTradeNo: `ORD-${Date.now()}`,
-      orderAmount: Number(precio).toFixed(2),
+      orderAmount: monto.toFixed(2),
       currency: 'USDT',
       goods: {
         goodsType: '02',
@@ -72,22 +80,24 @@ export const crearCobroBinance = async (req, res) => {
     // Registrar la orden aprobada por Binance en Supabase
     const { data: dbData, error: dbError } = await supabase
       .from('transacciones')
-      .insert([
-        {
-          preference_id: data.data.prepayId,
-          titulo: titulo,
-          monto: Number(precio),
-          comision: 0,
-          estado: 'pending',
-          pasarela: 'binance'
-        }
-      ])
-      .select();
+      .insert([{
+        preference_id: data.data.prepayId,
+        cliente_id: clienteId,
+        titulo,
+        monto,
+        comision: comisionMonto,
+        comision_monto: comisionMonto,
+        estado: 'pending',
+        pasarela: 'binance',
+      }])
+      .select()
+      .single();
 
     if (dbError) {
       console.error('⚠️ Error al guardar en Supabase:', dbError.message);
+      return res.status(500).json({ error: 'Binance creó el pago, pero no se pudo registrar la transacción' });
     } else {
-      console.log('✅ Orden REAL de Binance registrada en Supabase:', dbData[0].id);
+      console.log('✅ Orden REAL de Binance registrada en Supabase:', dbData.id);
     }
 
     // Devolver la URL REAL de checkout de Binance

@@ -1,13 +1,13 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { mpClient } from '../config/mp.js';
 import { supabase } from '../config/supabase.js';
+import { calculateCommissionAmount } from '../services/commissionService.js';
 
 export const crearCobro = async (req, res) => {
   try {
     const {
       producto_id: productoId,
       vendedorAccessToken,
-      comisionPorcentaje = 0.015,
       return_url: returnUrl,
       email_comprador: emailComprador,
       plan_id: planId,
@@ -40,6 +40,7 @@ export const crearCobro = async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos obligatorios: titulo o precio' });
     }
 
+    const comisionMonto = await calculateCommissionAmount(clientePagoId, precioNumerico);
     const accessTokenVendedor = typeof vendedorAccessToken === 'string'
       ? vendedorAccessToken.trim()
       : '';
@@ -48,7 +49,6 @@ export const crearCobro = async (req, res) => {
       return res.status(503).json({ error: 'Se requiere un access token de Mercado Pago de producción' });
     }
 
-    const marketplaceFee = Math.round(precioNumerico * Number(comisionPorcentaje));
     const preferenceClient = accessTokenVendedor
       ? new MercadoPagoConfig({ accessToken: accessTokenVendedor, options: mpClient.options })
       : mpClient;
@@ -89,8 +89,8 @@ export const crearCobro = async (req, res) => {
     }
 
     // Solo agregar marketplace_fee si realmente viene un vendedor distinto por OAuth
-    if (accessTokenVendedor && marketplaceFee > 0) {
-      bodyData.marketplace_fee = marketplaceFee;
+    if (accessTokenVendedor && comisionMonto > 0) {
+      bodyData.marketplace_fee = comisionMonto;
     }
 
     const response = await preference.create({ body: bodyData });
@@ -101,31 +101,27 @@ export const crearCobro = async (req, res) => {
     }
 
     // 2. Registro de la transacción en Supabase
-    try {
-      const { data, error } = await supabase
-        .from('transacciones')
-        .insert([
-          {
-            preference_id: response.id,
-            cliente_id: clientePagoId,
-            producto_id: productoId || null,
-            titulo: titulo.trim(),
-            monto: precioNumerico,
-            comision: marketplaceFee,
-            estado: 'pending',
-            pasarela: 'mercadopago'
-          }
-        ])
-        .select();
+    const { data, error } = await supabase
+      .from('transacciones')
+      .insert([{
+        preference_id: response.id,
+        cliente_id: clientePagoId,
+        producto_id: productoId || null,
+        titulo: titulo.trim(),
+        monto: precioNumerico,
+        comision: comisionMonto,
+        comision_monto: comisionMonto,
+        estado: 'pending',
+        pasarela: 'mercadopago',
+      }])
+      .select()
+      .single();
 
-      if (error) {
-        console.error('⚠️ Error al registrar en Supabase:', error.message);
-      } else if (data && data.length > 0) {
-        console.log('✅ Transacción registrada en Supabase ID:', data[0].id);
-      }
-    } catch (dbError) {
-      console.error('⚠️ Excepción al intentar guardar en Supabase:', dbError.message);
+    if (error) {
+      console.error('Error al registrar la transacción en Supabase:', error.message);
+      return res.status(500).json({ error: 'No se pudo registrar la transacción' });
     }
+    console.log('Transacción registrada en Supabase ID:', data.id);
 
     return res.status(200).json({
       init_point: response.init_point,

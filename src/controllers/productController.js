@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { supabase } from '../config/supabase.js';
 import { Payment } from 'mercadopago';
 import { mpClient } from '../config/mp.js';
+import { calculateCommissionAmount, PLAN_COMMISSION_RATES } from '../services/commissionService.js';
 
 const PRODUCT_BUCKET = 'ebooks-privados';
 const SIGNED_URL_TTL_SECONDS = 24 * 60 * 60;
@@ -23,7 +24,7 @@ export const getConfiguracion = async (req, res) => {
     const idCliente = req.user?.cliente_id || req.user?.tienda_id || 'default';
     let { data, error } = await supabase
       .from('configuraciones_pago')
-      .select('cliente_id, tienda_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
+      .select('cliente_id, tienda_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars, plan_tier, comision_porcentaje')
       .eq('cliente_id', idCliente)
       .maybeSingle();
 
@@ -35,7 +36,7 @@ export const getConfiguracion = async (req, res) => {
     if (!data && idCliente !== 'default') {
       const resultadoTienda = await supabase
         .from('configuraciones_pago')
-        .select('cliente_id, tienda_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars')
+        .select('cliente_id, tienda_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars, plan_tier, comision_porcentaje')
         .eq('tienda_id', idCliente)
         .maybeSingle();
 
@@ -54,6 +55,8 @@ export const getConfiguracion = async (req, res) => {
         qr_trc20_url: '',
         qr_bep20_url: '',
         cotizacion_usd_ars: 1620,
+        plan_tier: 'starter',
+        comision_porcentaje: PLAN_COMMISSION_RATES.starter,
       });
     }
 
@@ -74,6 +77,13 @@ export const updateConfiguracion = async (req, res) => {
     qr_bep20_url: body.qr_bep20_url,
     cotizacion_usd_ars: body.cotizacion_usd_ars,
   };
+  if (body.plan_tier !== undefined) {
+    if (!['starter', 'pro', 'scale'].includes(body.plan_tier)) {
+      return res.status(400).json({ error: 'El plan debe ser starter, pro o scale' });
+    }
+    camposConfiguracion.plan_tier = body.plan_tier;
+    camposConfiguracion.comision_porcentaje = PLAN_COMMISSION_RATES[body.plan_tier];
+  }
   const camposTexto = ['wallet_trc20', 'wallet_bep20', 'qr_trc20_url', 'qr_bep20_url'];
 
   for (const campo of camposTexto) {
@@ -97,12 +107,30 @@ export const updateConfiguracion = async (req, res) => {
   camposConfiguracion.cotizacion_usd_ars = cotizacion;
 
   try {
+    const { data: configuracionExistente, error: consultaError } = await supabase
+      .from('configuraciones_pago')
+      .select('plan_tier, comision_porcentaje')
+      .eq('cliente_id', idCliente)
+      .maybeSingle();
+
+    if (consultaError) {
+      console.error('Error al consultar el plan actual antes de actualizar la configuración:', consultaError.message);
+      return res.status(400).json({ error: consultaError.message });
+    }
+
+    const planTier = body.plan_tier || configuracionExistente?.plan_tier || 'starter';
+    const comisionPorcentaje = (Object.prototype.hasOwnProperty.call(PLAN_COMMISSION_RATES, planTier)
+      ? PLAN_COMMISSION_RATES[planTier]
+      : undefined)
+      ?? Number(configuracionExistente?.comision_porcentaje ?? 0);
     const { data, error } = await supabase
       .from('configuraciones_pago')
       .upsert({
         cliente_id: idCliente,
         tienda_id: idCliente,
         ...camposConfiguracion,
+        plan_tier: planTier,
+        comision_porcentaje: comisionPorcentaje,
       }, { onConflict: 'cliente_id' })
       .select();
 
@@ -148,9 +176,29 @@ export const subirQrPago = async (req, res) => {
 
     const { data: publicUrl } = supabase.storage.from('qr-pasarela').getPublicUrl(qrPath);
     const campoUrl = `qr_${red}_url`;
+    const { data: configuracionExistente, error: consultaError } = await supabase
+      .from('configuraciones_pago')
+      .select('cliente_id, tienda_id, wallet_trc20, wallet_bep20, qr_trc20_url, qr_bep20_url, cotizacion_usd_ars, plan_tier, comision_porcentaje')
+      .eq('cliente_id', idCliente)
+      .maybeSingle();
+
+    if (consultaError) {
+      console.error('Error al consultar la configuración antes de actualizar el QR:', consultaError.message);
+      return res.status(500).json({ error: 'El archivo se guardó, pero no se pudo consultar la configuración' });
+    }
+
     const { data, error } = await supabase
       .from('configuraciones_pago')
       .upsert({
+        ...(configuracionExistente || {
+          wallet_trc20: process.env.USDT_TRC20_WALLET || '',
+          wallet_bep20: process.env.USDT_BEP20_WALLET || '',
+          qr_trc20_url: '',
+          qr_bep20_url: '',
+          cotizacion_usd_ars: 1620,
+          plan_tier: 'starter',
+          comision_porcentaje: PLAN_COMMISSION_RATES.starter,
+        }),
         cliente_id: idCliente,
         tienda_id: idCliente,
         [campoUrl]: publicUrl.publicUrl,
@@ -239,9 +287,25 @@ export const cambiarEstadoTransaccion = async (req, res) => {
   }
 
   try {
+    const { data: transaccion, error: consultaError } = await supabase
+      .from('transacciones')
+      .select('cliente_id, monto')
+      .eq('id', transaccionId)
+      .eq('cliente_id', idCliente)
+      .maybeSingle();
+
+    if (consultaError) {
+      console.error('Error al consultar la transacción antes de cambiar su estado:', consultaError.message);
+      return res.status(500).json({ error: 'No se pudo consultar la transacción' });
+    }
+    if (!transaccion) return res.status(404).json({ error: 'Transacción no encontrada' });
+
+    const comisionMonto = estado === 'approved'
+      ? await calculateCommissionAmount(transaccion.cliente_id || idCliente, transaccion.monto)
+      : 0;
     const { data, error } = await supabase
       .from('transacciones')
-      .update({ estado })
+      .update({ estado, comision_monto: comisionMonto, comision: comisionMonto })
       .eq('id', transaccionId)
       .eq('cliente_id', idCliente)
       .select()

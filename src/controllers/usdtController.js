@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { supabase } from '../config/supabase.js';
+import { calculateCommissionAmount } from '../services/commissionService.js';
 
 const PAYMENT_PROOF_BUCKET = 'comprobantes-pagos';
 
@@ -85,6 +86,7 @@ export const registrarPagoUSDT = async (req, res) => {
     if (typeof titulo !== 'string' || !titulo.trim() || !Number.isFinite(monto) || monto <= 0) {
       return res.status(400).json({ error: 'Se requieren título y precio válido para registrar el pago' });
     }
+    const comisionMonto = await calculateCommissionAmount(clienteId, monto);
 
     if (req.file) {
       const extensiones = {
@@ -123,7 +125,8 @@ export const registrarPagoUSDT = async (req, res) => {
           producto_id: productoId || null,
           titulo: `${titulo.trim()} (${String(red).toUpperCase()})`,
           monto,
-          comision: 0,
+          comision: comisionMonto,
+          comision_monto: comisionMonto,
           estado: 'pending',
           pasarela: 'binance',
           comprobante_path: comprobantePath || null,

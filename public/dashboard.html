@@ -2,459 +2,706 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#09090B">
-  <title>NÓMADA PAY | Dashboard</title>
+  <title>NÓMADA PAY · Panel de control</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root { color-scheme: dark; }
-    body { font-family: "DM Sans", sans-serif; background: #09090B; }
-    h1, h2, h3, .brand { font-family: "Manrope", sans-serif; }
-    .panel { background: linear-gradient(145deg, rgba(24,24,27,.94), rgba(15,15,17,.96)); border: 1px solid rgba(63,63,70,.55); }
-    .gold { color: #FFC600; }
-    .gold-button { background: #FFC600; color: #111; }
-    .gold-button:hover { background: #ffd43b; }
-    .tab-active { color: #FFC600; border-color: #FFC600; background: rgba(255,198,0,.07); }
+    :root { color-scheme: dark; --gold: #FFC600; --ink: #09090B; }
+    * { scrollbar-color: #3f3f46 transparent; scrollbar-width: thin; }
+    body { font-family: Inter, sans-serif; background: var(--ink); }
+    h1, h2, h3, .font-display { font-family: "Plus Jakarta Sans", Inter, sans-serif; }
+    .glass { background: linear-gradient(145deg, rgba(24,24,27,.84), rgba(15,15,17,.88)); border: 1px solid rgba(255,255,255,.075); box-shadow: 0 20px 60px rgba(0,0,0,.18); backdrop-filter: blur(18px); }
+    .gold-glow { box-shadow: 0 0 35px rgba(255,198,0,.09), inset 0 1px rgba(255,255,255,.04); }
+    .nav-link { color: #a1a1aa; transition: .18s ease; }
+    .nav-link:hover, .nav-link.active { color: #ffe17a; background: rgba(255,198,0,.085); }
+    .nav-link.active { box-shadow: inset 2px 0 #FFC600; }
+    .field { width: 100%; border: 1px solid rgba(255,255,255,.1); background: rgba(9,9,11,.72); border-radius: .8rem; padding: .8rem .9rem; color: #f4f4f5; outline: none; transition: border-color .2s, box-shadow .2s; }
+    .field:focus { border-color: rgba(255,198,0,.65); box-shadow: 0 0 0 3px rgba(255,198,0,.08); }
+    .gold-button { background: linear-gradient(135deg,#ffdc55,#FFC600 60%,#e8ae00); color: #17130a; box-shadow: 0 8px 24px rgba(255,198,0,.12); }
+    .gold-button:hover { filter: brightness(1.07); transform: translateY(-1px); }
+    .page-view { animation: appear .24s ease both; }
+    @keyframes appear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .medal { background: linear-gradient(145deg,#fff1ad 0%,#ffc600 38%,#9b6800 100%); box-shadow: 0 8px 24px rgba(255,198,0,.16), inset 0 2px 1px rgba(255,255,255,.65), inset 0 -3px 4px rgba(83,51,0,.38); }
     input, select, textarea { color-scheme: dark; }
+    @media (max-width: 1023px) { #sidebar { transform: translateX(-100%); transition: transform .24s ease; } #sidebar.sidebar-open { transform: translateX(0); } }
   </style>
 </head>
-<body class="min-h-screen text-zinc-100 antialiased">
-  <section id="loginScreen" class="min-h-screen flex items-center justify-center px-4 py-10">
-    <form id="loginForm" class="panel w-full max-w-md rounded-3xl p-8 shadow-2xl shadow-black/40">
-      <div class="brand gold text-sm font-extrabold tracking-[.22em]">NÓMADA PAY</div>
-      <h1 class="mt-8 text-2xl font-bold">Acceso al dashboard</h1>
-      <p class="mt-2 text-sm text-zinc-400">Inicia sesión con tu cuenta de Supabase para administrar tu pasarela.</p>
-      <label class="mt-7 block text-xs font-semibold uppercase tracking-wider text-zinc-400" for="loginEmail">Email</label>
-      <input id="loginEmail" type="email" autocomplete="username" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]">
-      <label class="mt-5 block text-xs font-semibold uppercase tracking-wider text-zinc-400" for="loginPassword">Contraseña</label>
-      <input id="loginPassword" type="password" autocomplete="current-password" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]">
-      <p id="loginError" class="mt-4 hidden text-sm text-red-400" role="alert"></p>
-      <button class="gold-button mt-6 w-full rounded-xl px-4 py-3 font-bold transition" type="submit">Iniciar sesión</button>
+<body class="min-h-screen bg-[#09090B] text-zinc-100 antialiased selection:bg-[#FFC600]/25">
+  <section id="loginScreen" class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#09090B] px-4 py-8">
+    <div class="pointer-events-none absolute -left-20 top-0 h-80 w-80 rounded-full bg-[#FFC600]/[.07] blur-[120px]"></div>
+    <div class="pointer-events-none absolute -bottom-24 -right-10 h-96 w-96 rounded-full bg-amber-900/10 blur-[130px]"></div>
+    <form id="loginForm" class="glass gold-glow relative w-full max-w-[430px] rounded-[28px] p-7 sm:p-9">
+      <div class="mb-9 flex items-center gap-3">
+        <div class="grid h-11 w-11 place-items-center rounded-2xl border border-[#FFC600]/20 bg-[#FFC600]/10 text-[#FFC600]"><i data-lucide="orbit" class="h-5 w-5"></i></div>
+        <div><div class="font-display text-sm font-extrabold tracking-[.2em] text-[#FFD84D]">NÓMADA PAY</div><div class="mt-1 text-[10px] uppercase tracking-[.2em] text-zinc-500">Seller control center</div></div>
+      </div>
+      <div class="mb-7">
+        <p class="text-xs font-semibold uppercase tracking-[.18em] text-[#FFC600]">Tu negocio, en movimiento</p>
+        <h1 class="mt-3 text-3xl font-bold tracking-tight text-white">Bienvenido de vuelta</h1>
+        <p class="mt-2 text-sm leading-6 text-zinc-400">Accede a tu espacio de ventas digitales.</p>
+      </div>
+      <label for="loginEmail" class="mb-2 block text-xs font-medium text-zinc-300">Correo electrónico</label>
+      <input id="loginEmail" type="email" autocomplete="username" required class="field mb-5" placeholder="tu@email.com">
+      <label for="loginPassword" class="mb-2 block text-xs font-medium text-zinc-300">Contraseña</label>
+      <input id="loginPassword" type="password" autocomplete="current-password" required minlength="6" class="field">
+      <p id="loginError" class="mt-4 hidden rounded-xl border border-red-500/20 bg-red-500/[.07] px-3 py-2 text-sm text-red-300" role="alert"></p>
+      <button id="loginSubmit" class="gold-button mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition" type="submit"><span>Iniciar sesión</span><i data-lucide="arrow-up-right" class="h-4 w-4"></i></button>
+      <button id="registerToggle" class="mt-5 w-full text-center text-xs text-zinc-500 transition hover:text-[#FFD84D]" type="button">¿Primera vez? <span class="font-semibold text-zinc-300">Crear cuenta</span></button>
+      <p class="mt-7 border-t border-white/[.07] pt-5 text-center text-[10px] tracking-wide text-zinc-600">Conexión protegida · Nómada Pay</p>
     </form>
   </section>
 
   <div id="dashboardApp" class="hidden min-h-screen">
-    <header class="sticky top-0 z-30 border-b border-zinc-800 bg-[#09090B]/90 backdrop-blur-xl">
-      <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <div>
-          <div class="brand gold text-sm font-extrabold tracking-[.22em]">NÓMADA PAY</div>
-          <p class="mt-1 text-[11px] text-zinc-500">PANEL DE COMERCIO <span class="px-1">·</span> <span id="tenantLabel"></span></p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button id="refreshButton" class="rounded-xl border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-zinc-500 hover:text-white">Actualizar</button>
-          <button id="logoutButton" class="rounded-xl border border-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-500 transition hover:text-white">Cerrar Sesión</button>
+    <div id="mobileOverlay" class="fixed inset-0 z-40 hidden bg-black/70 backdrop-blur-sm lg:hidden"></div>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-white/[.07] bg-[#0b0b0d]/95 backdrop-blur-2xl lg:translate-x-0">
+      <div class="flex h-[76px] items-center justify-between border-b border-white/[.07] px-5">
+        <a href="#" data-view="overview" class="flex items-center gap-3">
+          <div class="grid h-10 w-10 place-items-center rounded-xl border border-[#FFC600]/20 bg-[#FFC600]/10 text-[#FFD84D]"><i data-lucide="orbit" class="h-5 w-5"></i></div>
+          <div><div class="font-display text-[13px] font-extrabold tracking-[.19em] text-[#FFD84D]">NÓMADA PAY</div><div class="mt-1 text-[9px] uppercase tracking-[.18em] text-zinc-600">Luxury commerce</div></div>
+        </a>
+        <button id="closeSidebar" class="rounded-lg p-2 text-zinc-500 hover:bg-white/5 lg:hidden" aria-label="Cerrar menú"><i data-lucide="x" class="h-4 w-4"></i></button>
+      </div>
+      <div class="border-b border-white/[.07] p-4">
+        <button id="storeSelector" class="flex w-full items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.025] p-3 text-left transition hover:border-[#FFC600]/20">
+          <div class="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-amber-200 to-amber-700 text-black"><i data-lucide="store" class="h-4 w-4"></i></div>
+          <span class="min-w-0 flex-1"><span class="block truncate text-xs font-semibold text-zinc-200">Nómada Trading</span><span class="mt-1 block text-[10px] text-zinc-500">Workspace multicliente</span></span>
+          <i data-lucide="chevrons-up-down" class="h-4 w-4 text-zinc-600"></i>
+        </button>
+        <div id="storeMenu" class="mt-2 hidden rounded-xl border border-[#FFC600]/15 bg-[#FFC600]/[.04] p-3">
+          <p class="text-[10px] font-semibold text-[#FFD84D]">Comercio activo</p>
+          <p id="storeTenant" class="mt-1 break-all font-mono text-[9px] text-zinc-500"></p>
+          <p class="mt-2 text-[9px] leading-4 text-zinc-600">El acceso se limita al comercio asignado a tu cuenta.</p>
         </div>
       </div>
-    </header>
-
-    <main class="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      <section>
-        <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
-          <div>
-            <p class="gold text-xs font-bold uppercase tracking-[.2em]">Resumen de tu negocio</p>
-            <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-white">Métricas &amp; Flujo de Caja</h1>
-          </div>
-          <p id="lastUpdated" class="text-xs text-zinc-500"></p>
+      <nav class="flex-1 space-y-5 overflow-y-auto px-3 py-5" aria-label="Navegación principal">
+        <div>
+          <p class="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.18em] text-zinc-600">General</p>
+          <a href="#" data-view="overview" class="nav-link active flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="layout-dashboard" class="h-4 w-4"></i>Inicio <span class="ml-auto h-1.5 w-1.5 rounded-full bg-[#FFC600]"></span></a>
+          <a href="#" data-view="missions" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="flame" class="h-4 w-4"></i>Racha Nómada</a>
+          <a href="#" data-view="orders" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="receipt-text" class="h-4 w-4"></i>Pedidos / Transacciones<span id="ordersBadge" class="ml-auto hidden rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] text-[#FFD84D]">0</span></a>
+          <a href="#" data-view="clients" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="users-round" class="h-4 w-4"></i>Clientes</a>
+          <a href="#" data-view="carts" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="shopping-cart" class="h-4 w-4"></i>Carritos abandonados</a>
         </div>
-        <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <article class="panel rounded-2xl p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total facturado ARS</p>
-            <p id="metricArs" class="mt-3 text-2xl font-extrabold text-white">$ 0</p>
-            <p class="mt-2 text-xs text-zinc-500">Ventas aprobadas en pesos</p>
-          </article>
-          <article class="panel rounded-2xl p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Total recibido USDT</p>
-            <p id="metricUsdt" class="gold mt-3 text-2xl font-extrabold">0 USDT</p>
-            <p class="mt-2 text-xs text-zinc-500">Pagos cripto aprobados</p>
-          </article>
-          <article class="panel rounded-2xl p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Cantidad de ventas</p>
-            <p id="metricSales" class="mt-3 text-2xl font-extrabold text-white">0</p>
-            <p class="mt-2 text-xs text-zinc-500">Operaciones aprobadas</p>
-          </article>
-          <article class="panel rounded-2xl p-5">
-            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Comprobantes por aprobar</p>
-            <p id="metricPending" class="mt-3 text-2xl font-extrabold text-amber-300">0</p>
-            <p class="mt-2 text-xs text-zinc-500">Pagos manuales pendientes</p>
-          </article>
+        <div>
+          <p class="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.18em] text-zinc-600">Gestión</p>
+          <a href="#" data-view="products" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="book-open" class="h-4 w-4"></i>Productos digitales</a>
+          <a href="#" data-view="gateway" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="wallet-cards" class="h-4 w-4"></i>Pasarela · Wallets &amp; QR</a>
+          <a href="#" data-view="checkouts" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="panels-top-left" class="h-4 w-4"></i>Landings &amp; Checkouts</a>
+          <a href="#" data-view="files" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="folder-lock" class="h-4 w-4"></i>Archivos &amp; Entrega</a>
         </div>
-      </section>
-
-      <nav class="flex gap-2 overflow-x-auto border-b border-zinc-800" aria-label="Secciones del dashboard">
-        <button class="tab-button tab-active whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold text-zinc-400 transition" data-tab="transactions">Transacciones</button>
-        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="settings">Pasarela (Wallets &amp; QRs)</button>
-        <button class="tab-button whitespace-nowrap border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:text-white" data-tab="products">E-books &amp; Infoproductos</button>
+        <div>
+          <p class="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.18em] text-zinc-600">Optimización</p>
+          <a href="#" data-view="conversion" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="chart-no-axes-combined" class="h-4 w-4"></i>Métricas de conversión</a>
+          <a href="#" data-view="abandonment" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="chart-no-axes-column-increasing" class="h-4 w-4"></i>Tasa de abandono</a>
+          <a href="#" data-view="tests" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="flask-conical" class="h-4 w-4"></i>Tests A/B</a>
+        </div>
+        <div>
+          <p class="mb-2 px-3 text-[9px] font-bold uppercase tracking-[.18em] text-zinc-600">Ajustes</p>
+          <a href="#" data-view="account" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="user-round-cog" class="h-4 w-4"></i>Configuración de cuenta</a>
+          <a href="#" data-view="integrations" class="nav-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium"><i data-lucide="plug-zap" class="h-4 w-4"></i>Integraciones</a>
+          <button id="sidebarLogout" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-medium text-zinc-500 transition hover:bg-red-500/[.08] hover:text-red-300"><i data-lucide="log-out" class="h-4 w-4"></i>Cerrar sesión</button>
+        </div>
       </nav>
+      <div class="border-t border-white/[.07] p-4">
+        <div class="flex items-center gap-3 rounded-xl bg-white/[.025] p-3">
+          <div id="userAvatar" class="grid h-9 w-9 place-items-center rounded-full border border-[#FFC600]/20 bg-[#FFC600]/10 text-xs font-bold text-[#FFD84D]">N</div>
+          <div class="min-w-0 flex-1"><p id="userName" class="truncate text-xs font-semibold text-zinc-200">Nómada Admin</p><p id="userEmail" class="truncate text-[10px] text-zinc-500"></p></div>
+          <span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]"></span>
+        </div>
+      </div>
+    </aside>
 
-      <section id="tab-settings" class="tab-panel hidden">
-        <div class="panel rounded-2xl p-5 sm:p-7">
-          <div class="mb-6">
-            <h2 class="text-xl font-bold">Ajustes de Pasarela</h2>
-            <p class="mt-1 text-sm text-zinc-500">Configura los datos que verán tus compradores al elegir USDT.</p>
+    <div class="min-h-screen lg:pl-[264px]">
+      <header class="sticky top-0 z-30 border-b border-white/[.06] bg-[#09090B]/80 backdrop-blur-2xl">
+        <div class="flex h-[76px] items-center justify-between gap-3 px-4 sm:px-7">
+          <div class="flex min-w-0 items-center gap-3">
+            <button id="openSidebar" class="rounded-xl border border-white/[.08] p-2.5 text-zinc-400 hover:text-white lg:hidden" aria-label="Abrir menú"><i data-lucide="menu" class="h-4 w-4"></i></button>
+            <div class="min-w-0"><p class="text-[10px] font-semibold uppercase tracking-[.17em] text-zinc-600">Nómada Trading <span class="px-1 text-zinc-700">/</span> <span id="breadcrumb">Visión general</span></p><h1 id="pageTitle" class="mt-1 truncate font-display text-sm font-bold text-zinc-100 sm:text-base">Métricas &amp; Flujo de Caja</h1></div>
           </div>
-          <form id="settingsForm" class="grid gap-5 md:grid-cols-2">
-            <label class="block text-sm text-zinc-300">Wallet USDT · TRC20
-              <input name="wallet_trc20" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Dirección TRC20">
-            </label>
-            <label class="block text-sm text-zinc-300">Wallet USDT · BEP20
-              <input name="wallet_bep20" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Dirección BEP20">
-            </label>
-            <label class="block text-sm text-zinc-300">URL de QR · TRC20
-              <input name="qr_trc20_url" type="url" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="https://...">
-              <span class="mt-2 flex gap-2"><input id="qrTrc20File" type="file" accept="image/jpeg,image/png,image/webp" class="min-w-0 flex-1 text-xs text-zinc-500 file:mr-2 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-zinc-200"><button type="button" data-qr="trc20" class="upload-qr rounded-lg border border-zinc-700 px-3 text-xs font-semibold text-zinc-300 hover:border-[#FFC600] hover:text-[#FFC600]">Subir QR</button></span>
-            </label>
-            <label class="block text-sm text-zinc-300">URL de QR · BEP20
-              <input name="qr_bep20_url" type="url" maxlength="2048" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="https://...">
-              <span class="mt-2 flex gap-2"><input id="qrBep20File" type="file" accept="image/jpeg,image/png,image/webp" class="min-w-0 flex-1 text-xs text-zinc-500 file:mr-2 file:rounded-lg file:border-0 file:bg-zinc-800 file:px-3 file:py-2 file:text-zinc-200"><button type="button" data-qr="bep20" class="upload-qr rounded-lg border border-zinc-700 px-3 text-xs font-semibold text-zinc-300 hover:border-[#FFC600] hover:text-[#FFC600]">Subir QR</button></span>
-            </label>
-            <label class="block text-sm text-zinc-300 md:col-span-2">Cotización USD / ARS
-              <input name="cotizacion_usd_ars" type="number" min="0.01" step="0.01" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Ej. 1200">
-            </label>
-            <div class="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center">
-              <button id="saveSettingsButton" class="gold-button rounded-xl px-5 py-3 text-sm font-bold transition" type="submit">Guardar configuración</button>
-              <p id="settingsMessage" class="text-sm text-zinc-500" role="status"></p>
-            </div>
-          </form>
+          <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+            <span class="hidden items-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/[.06] px-3 py-1.5 text-[10px] text-emerald-300 sm:flex"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span>Pasarela activa</span>
+            <button id="refreshButton" class="rounded-xl border border-white/[.08] p-2.5 text-zinc-400 transition hover:border-[#FFC600]/25 hover:text-[#FFD84D]" title="Actualizar datos" aria-label="Actualizar"><i data-lucide="refresh-cw" class="h-4 w-4"></i></button>
+            <div class="hidden h-8 w-px bg-white/[.08] sm:block"></div>
+            <span id="headerUser" class="hidden max-w-[150px] truncate text-xs text-zinc-400 sm:block"></span>
+            <button id="headerLogout" class="flex items-center gap-2 rounded-xl border border-white/[.08] px-3 py-2.5 text-xs font-medium text-zinc-400 transition hover:border-red-500/20 hover:text-red-300"><i data-lucide="log-out" class="h-4 w-4"></i><span class="hidden sm:inline">Cerrar sesión</span></button>
+          </div>
         </div>
-      </section>
+      </header>
 
-      <section id="tab-products" class="tab-panel hidden space-y-6">
-        <div class="panel rounded-2xl p-5 sm:p-7">
-          <h2 class="text-xl font-bold">Creador de E-books / Productos</h2>
-          <p class="mt-1 text-sm text-zinc-500">Publica un producto digital y genera un enlace de checkout para cualquier sitio web.</p>
-          <form id="productForm" class="mt-6 grid gap-4 md:grid-cols-2">
-            <label class="text-sm text-zinc-300">Título
-              <input name="titulo" required maxlength="200" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Nombre del producto">
-            </label>
-            <label class="text-sm text-zinc-300">Tipo
-              <select name="tipo" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]">
-                <option value="ebook">E-book</option>
-                <option value="curso">Curso</option>
-                <option value="matricula">Matrícula</option>
-              </select>
-            </label>
-            <label class="text-sm text-zinc-300">Precio ARS
-              <input name="precio_ars" type="number" min="0" step="0.01" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="0">
-            </label>
-            <label class="text-sm text-zinc-300">Precio USD / USDT
-              <input name="precio_usd" type="number" min="0" step="0.01" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="0">
-            </label>
-            <label class="text-sm text-zinc-300 md:col-span-2">Link de entrega pospago
-              <input name="link_entrega" type="url" required class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="https://...">
-            </label>
-            <label class="text-sm text-zinc-300 md:col-span-2">Descripción
-              <textarea name="descripcion" rows="3" maxlength="2000" class="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 outline-none focus:border-[#FFC600]" placeholder="Descripción opcional del producto"></textarea>
-            </label>
-            <div class="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center">
-              <button id="createProductButton" class="gold-button rounded-xl px-5 py-3 text-sm font-bold transition" type="submit">Crear producto</button>
-              <p id="productMessage" class="text-sm text-zinc-500" role="status"></p>
-            </div>
-          </form>
-        </div>
-        <div class="panel overflow-hidden rounded-2xl">
-          <div class="border-b border-zinc-800 px-5 py-4">
-            <h3 class="font-bold">Productos activos</h3>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-[760px] text-left text-sm">
-              <thead class="bg-zinc-950/70 text-[11px] uppercase tracking-wider text-zinc-500">
-                <tr><th class="px-5 py-3">Producto</th><th class="px-5 py-3">Tipo</th><th class="px-5 py-3">Precio</th><th class="px-5 py-3 text-right">Enlace de pago</th></tr>
-              </thead>
-              <tbody id="productsTable" class="divide-y divide-zinc-800/80">
-                <tr><td colspan="4" class="px-5 py-8 text-center text-zinc-500">Cargando productos…</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+      <main class="mx-auto max-w-[1500px] space-y-7 px-4 py-6 sm:px-7 sm:py-8">
+        <div id="globalMessage" class="hidden rounded-xl border border-red-500/20 bg-red-500/[.06] px-4 py-3 text-sm text-red-300" role="alert"></div>
 
-      <section id="tab-transactions" class="tab-panel">
-        <div class="panel overflow-hidden rounded-2xl">
-          <div class="flex flex-col justify-between gap-3 border-b border-zinc-800 px-5 py-5 sm:flex-row sm:items-center">
-            <div>
-              <h2 class="text-xl font-bold">Auditoría de Ventas</h2>
-              <p class="mt-1 text-sm text-zinc-500">Revisa pagos, comprobantes y estado de acreditación.</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <select id="gatewayFilter" aria-label="Filtrar por pasarela" class="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300">
-                <option value="all">Todas las pasarelas</option>
-                <option value="mercadopago">Mercado Pago</option>
-                <option value="usdt">USDT</option>
-              </select>
-              <select id="transactionFilter" aria-label="Filtrar por estado" class="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-300">
-                <option value="all">Todos los estados</option>
-                <option value="pending">Pendientes</option>
-                <option value="approved">Aprobados</option>
-                <option value="rejected">Rechazados</option>
-              </select>
+        <section id="view-overview" class="page-view space-y-7">
+          <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Panel principal</p><h2 class="mt-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">Métricas &amp; Flujo de Caja</h2><p class="mt-2 text-sm text-zinc-500">El pulso de tu negocio digital, en un solo lugar.</p></div>
+            <p id="lastUpdated" class="text-[11px] text-zinc-600"></p>
+          </div>
+          <div id="missionBanner" class="glass gold-glow relative overflow-hidden rounded-2xl p-5 sm:p-6">
+            <div class="pointer-events-none absolute -right-10 -top-20 h-56 w-56 rounded-full bg-[#FFC600]/[.055] blur-[70px]"></div>
+            <div class="relative grid gap-6 xl:grid-cols-[1.05fr_2fr] xl:items-center">
+              <div class="flex items-center gap-4">
+                <div class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-[#FFC600]/20 bg-[#FFC600]/[.08] text-[#FFD84D]"><i data-lucide="flame" class="h-7 w-7"></i></div>
+                <div><p class="text-[10px] font-bold uppercase tracking-[.17em] text-[#FFC600]">Tu impulso Nómada</p><div class="mt-1 flex items-baseline gap-2"><strong id="salesStreak" class="font-display text-2xl font-extrabold text-white">0 días</strong><span class="text-xs text-zinc-500">de racha</span></div><p class="mt-1 text-[11px] text-zinc-500"><span id="pointsTotal" class="font-semibold text-[#FFD84D]">0 puntos</span> · cada venta aprobada suma 25</p></div>
+              </div>
+              <div class="grid gap-2 sm:grid-cols-3">
+                <div id="missionWallet" class="mission-item flex items-center gap-3 rounded-xl border border-white/[.06] bg-black/20 p-3"><span class="mission-icon grid h-8 w-8 place-items-center rounded-lg bg-white/[.05] text-zinc-500"><i data-lucide="wallet" class="h-4 w-4"></i></span><span class="min-w-0"><span class="block text-[11px] font-semibold text-zinc-300">Completar wallets</span><span class="mission-status mt-1 block text-[9px] text-zinc-600">+50 puntos</span></span></div>
+                <div id="missionProduct" class="mission-item flex items-center gap-3 rounded-xl border border-white/[.06] bg-black/20 p-3"><span class="mission-icon grid h-8 w-8 place-items-center rounded-lg bg-white/[.05] text-zinc-500"><i data-lucide="book-open" class="h-4 w-4"></i></span><span class="min-w-0"><span class="block text-[11px] font-semibold text-zinc-300">Publicar un e-book</span><span class="mission-status mt-1 block text-[9px] text-zinc-600">+50 puntos</span></span></div>
+                <div id="missionWeb" class="mission-item flex items-center gap-3 rounded-xl border border-white/[.06] bg-black/20 p-3"><span class="mission-icon grid h-8 w-8 place-items-center rounded-lg bg-white/[.05] text-zinc-500"><i data-lucide="globe-2" class="h-4 w-4"></i></span><span class="min-w-0"><span class="block text-[11px] font-semibold text-zinc-300">Conectar tu web</span><span class="mission-status mt-1 block text-[9px] text-zinc-600">Configura retorno de pago</span></span></div>
+              </div>
             </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full min-w-[900px] text-left text-sm">
-              <thead class="bg-zinc-950/70 text-[11px] uppercase tracking-wider text-zinc-500">
-                <tr><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Producto / Pasarela</th><th class="px-5 py-3">Monto</th><th class="px-5 py-3">Comprobante</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3 text-right">Acciones</th></tr>
-              </thead>
-              <tbody id="transactionsTable" class="divide-y divide-zinc-800/80">
-                <tr><td colspan="6" class="px-5 py-8 text-center text-zinc-500">Cargando transacciones…</td></tr>
-              </tbody>
-            </table>
+
+          <div class="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
+            <article class="glass rounded-2xl p-5"><div class="flex items-start justify-between"><div><p class="text-[11px] font-medium text-zinc-500">Ventas de hoy</p><p id="metricTodayArs" class="mt-3 font-display text-xl font-bold text-white">$ 0</p><p id="metricTodayUsdt" class="mt-1 text-xs text-zinc-500">0 USDT</p></div><span class="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/[.09] text-emerald-300"><i data-lucide="chart-no-axes-combined" class="h-4 w-4"></i></span></div><div class="mt-4 flex items-center gap-2 border-t border-white/[.06] pt-3"><span class="text-[10px] text-zinc-600">Ventas aprobadas hoy</span><span id="todayCount" class="ml-auto text-[10px] font-semibold text-zinc-300">0</span></div></article>
+            <article class="glass rounded-2xl p-5"><div class="flex items-start justify-between"><div><p class="text-[11px] font-medium text-zinc-500">Ventas del mes</p><p id="metricMonth" class="mt-3 font-display text-xl font-bold text-white">$ 0</p><p class="mt-1 text-xs text-zinc-500">ARS equivalente</p></div><span class="grid h-9 w-9 place-items-center rounded-xl bg-[#FFC600]/[.09] text-[#FFD84D]"><i data-lucide="chart-column-increasing" class="h-4 w-4"></i></span></div><div class="mt-4 flex items-center gap-2 border-t border-white/[.06] pt-3"><span class="text-[10px] text-zinc-600">Mes calendario</span><span id="monthCount" class="ml-auto text-[10px] font-semibold text-zinc-300">0 ventas</span></div></article>
+            <article class="glass rounded-2xl p-5"><div class="flex items-start justify-between"><div><p class="text-[11px] font-medium text-zinc-500">Ganancia neta estimada</p><p id="metricNet" class="mt-3 font-display text-xl font-bold text-white">$ 0</p><p class="mt-1 text-xs text-zinc-500">Descontando comisión registrada</p></div><span class="grid h-9 w-9 place-items-center rounded-xl bg-sky-500/[.09] text-sky-300"><i data-lucide="badge-dollar-sign" class="h-4 w-4"></i></span></div><div class="mt-4 flex items-center gap-2 border-t border-white/[.06] pt-3"><span class="text-[10px] text-zinc-600">Acumulado aprobado</span><span class="ml-auto text-[10px] font-semibold text-emerald-300">En vivo</span></div></article>
+            <article class="glass rounded-2xl p-5"><div class="flex items-start justify-between"><div><p class="text-[11px] font-medium text-zinc-500">Ticket promedio</p><p id="metricTicket" class="mt-3 font-display text-xl font-bold text-white">$ 0</p><p class="mt-1 text-xs text-zinc-500">Por operación aprobada</p></div><span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-500/[.09] text-violet-300"><i data-lucide="ticket" class="h-4 w-4"></i></span></div><div class="mt-4 flex items-center gap-2 border-t border-white/[.06] pt-3"><span class="text-[10px] text-zinc-600">Conversión</span><span class="ml-auto text-[10px] text-zinc-500">Sin datos de visitas</span></div></article>
           </div>
-        </div>
-      </section>
-      <p id="globalMessage" class="hidden rounded-xl border border-red-900/70 bg-red-950/40 px-4 py-3 text-sm text-red-300" role="alert"></p>
-    </main>
+
+          <div class="grid gap-4 2xl:grid-cols-[1.65fr_1fr]">
+            <section class="glass min-w-0 rounded-2xl p-5 sm:p-6">
+              <div class="flex flex-wrap items-start justify-between gap-3"><div><h3 class="font-display text-sm font-bold text-white">Rendimiento de ventas</h3><p class="mt-1 text-[11px] text-zinc-500">Últimos 7 días · operaciones aprobadas</p></div><span class="flex items-center gap-2 text-[10px] text-zinc-500"><span class="h-2 w-2 rounded-full bg-[#FFC600]"></span>ARS equivalente</span></div>
+              <div class="mt-5 h-[245px]"><canvas id="salesChart" aria-label="Ventas de los últimos siete días"></canvas></div>
+            </section>
+            <section class="glass rounded-2xl p-5 sm:p-6">
+              <div class="flex items-start justify-between"><div><h3 class="font-display text-sm font-bold text-white">Actividad en vivo</h3><p class="mt-1 text-[11px] text-zinc-500">Telemetría del checkout</p></div><span class="flex items-center gap-2 rounded-full border border-zinc-700/70 px-2.5 py-1 text-[9px] text-zinc-500"><span class="h-1.5 w-1.5 rounded-full bg-zinc-500"></span>Sin conectar</span></div>
+              <div class="mt-7 flex flex-col items-center rounded-xl border border-dashed border-white/[.09] bg-black/15 px-5 py-7 text-center"><div class="grid h-11 w-11 place-items-center rounded-full border border-white/[.08] bg-white/[.03] text-zinc-500"><i data-lucide="radio" class="h-5 w-5"></i></div><p class="mt-4 text-sm font-semibold text-zinc-300">Seguimiento de visitantes</p><p class="mt-2 max-w-xs text-[11px] leading-5 text-zinc-600">Usuarios activos y países aparecerán aquí cuando se conecte la analítica del checkout. No se muestran estimaciones inventadas.</p><button data-view="integrations" class="mt-4 text-[10px] font-semibold text-[#FFD84D] hover:text-[#FFC600]">Ver integraciones <span aria-hidden="true">→</span></button></div>
+            </section>
+          </div>
+
+          <section class="glass rounded-2xl p-5 sm:p-6">
+            <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p class="text-[10px] font-bold uppercase tracking-[.17em] text-[#FFC600]">Hitos de facturación</p><h3 class="mt-2 font-display text-base font-bold text-white">Placas Nómada</h3></div><p id="badgeProgressLabel" class="text-[10px] text-zinc-500">Calculado sobre ventas aprobadas en ARS</p></div>
+            <div id="badgesGrid" class="mt-5 grid gap-3 md:grid-cols-3"></div>
+          </section>
+        </section>
+
+        <section id="view-missions" class="page-view hidden space-y-6"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Gamificación</p><h2 class="mt-2 font-display text-2xl font-bold">Racha Nómada</h2><p class="mt-2 text-sm text-zinc-500">Pequeños pasos, grandes horizontes.</p></div><div class="glass rounded-2xl p-6"><div class="mb-5 flex items-center gap-4"><div class="grid h-14 w-14 place-items-center rounded-2xl bg-[#FFC600]/10 text-[#FFD84D]"><i data-lucide="flame" class="h-7 w-7"></i></div><div><p id="missionsStreak" class="font-display text-2xl font-extrabold">0 días</p><p id="missionsPoints" class="mt-1 text-xs text-zinc-500">0 puntos</p></div></div><div id="missionsList" class="grid gap-3 md:grid-cols-3"></div></div></section>
+
+        <section id="view-gateway" class="page-view hidden space-y-6"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Cobros multired</p><h2 class="mt-2 font-display text-2xl font-bold">Pasarela · Wallets &amp; QR</h2><p class="mt-2 text-sm text-zinc-500">Edita los datos de cobro que ven tus compradores.</p></div><div class="glass rounded-2xl p-5 sm:p-7"><form id="settingsForm" class="grid gap-5 md:grid-cols-2"><label class="text-xs font-medium text-zinc-300">Wallet USDT · TRC20<input name="wallet_trc20" maxlength="2048" class="field mt-2" placeholder="Dirección TRC20"></label><label class="text-xs font-medium text-zinc-300">Wallet USDT · BEP20<input name="wallet_bep20" maxlength="2048" class="field mt-2" placeholder="Dirección BEP20"></label><label class="text-xs font-medium text-zinc-300">URL de QR · TRC20<input name="qr_trc20_url" type="url" maxlength="2048" class="field mt-2" placeholder="https://..."><span class="mt-2 flex gap-2"><input id="qrTrc20File" type="file" accept="image/jpeg,image/png,image/webp" class="min-w-0 flex-1 text-[10px] text-zinc-500 file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-zinc-300"><button type="button" data-qr="trc20" class="upload-qr rounded-lg border border-white/10 px-3 text-[10px] font-semibold text-zinc-300 hover:border-[#FFC600]/40 hover:text-[#FFD84D]">Subir QR</button></span></label><label class="text-xs font-medium text-zinc-300">URL de QR · BEP20<input name="qr_bep20_url" type="url" maxlength="2048" class="field mt-2" placeholder="https://..."><span class="mt-2 flex gap-2"><input id="qrBep20File" type="file" accept="image/jpeg,image/png,image/webp" class="min-w-0 flex-1 text-[10px] text-zinc-500 file:mr-2 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-zinc-300"><button type="button" data-qr="bep20" class="upload-qr rounded-lg border border-white/10 px-3 text-[10px] font-semibold text-zinc-300 hover:border-[#FFC600]/40 hover:text-[#FFD84D]">Subir QR</button></span></label><label class="text-xs font-medium text-zinc-300 md:col-span-2">Cotización USD / ARS<input name="cotizacion_usd_ars" type="number" min="0.01" step="0.01" required class="field mt-2" placeholder="Ej. 1200"></label><div class="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center"><button id="saveSettingsButton" class="gold-button rounded-xl px-5 py-3 text-xs font-bold transition" type="submit">Guardar configuración</button><p id="settingsMessage" class="text-xs text-zinc-500" role="status"></p></div></form></div><div class="grid gap-4 sm:grid-cols-2"><article class="glass flex items-start gap-3 rounded-2xl p-5"><span class="grid h-9 w-9 place-items-center rounded-xl bg-sky-500/10 text-sky-300"><i data-lucide="credit-card" class="h-4 w-4"></i></span><div><p class="text-xs font-semibold">Mercado Pago</p><p class="mt-1 text-[10px] leading-5 text-zinc-500">El estado de los pagos se actualiza mediante notificaciones del proveedor.</p></div></article><article class="glass flex items-start gap-3 rounded-2xl p-5"><span class="grid h-9 w-9 place-items-center rounded-xl bg-[#FFC600]/10 text-[#FFD84D]"><i data-lucide="coins" class="h-4 w-4"></i></span><div><p class="text-xs font-semibold">USDT · TRC20 / BEP20</p><p class="mt-1 text-[10px] leading-5 text-zinc-500">Los pagos reportados y comprobantes esperan aprobación manual.</p></div></article></div></section>
+
+        <section id="view-products" class="page-view hidden space-y-6"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Tu catálogo digital</p><h2 class="mt-2 font-display text-2xl font-bold">E-books &amp; Infoproductos</h2><p class="mt-2 text-sm text-zinc-500">Crea experiencias de compra que viajan contigo.</p></div><div class="glass rounded-2xl p-5 sm:p-7"><form id="productForm" class="grid gap-4 md:grid-cols-2"><label class="text-xs font-medium text-zinc-300">Título del producto<input name="titulo" required maxlength="200" class="field mt-2" placeholder="Ej. Guía de inversión nómada"></label><label class="text-xs font-medium text-zinc-300">Formato<select name="tipo" class="field mt-2"><option value="ebook">E-book</option><option value="curso">Curso</option><option value="matricula">Matrícula</option></select></label><label class="text-xs font-medium text-zinc-300">Precio ARS<input name="precio_ars" type="number" min="0" step="0.01" required class="field mt-2" placeholder="0"></label><label class="text-xs font-medium text-zinc-300">Precio USD / USDT<input name="precio_usd" type="number" min="0" step="0.01" required class="field mt-2" placeholder="0"></label><label class="text-xs font-medium text-zinc-300 md:col-span-2">Enlace de entrega pospago<input name="link_entrega" type="url" required class="field mt-2" placeholder="https://..."></label><label class="text-xs font-medium text-zinc-300 md:col-span-2">Descripción<textarea name="descripcion" rows="3" maxlength="2000" class="field mt-2" placeholder="Describe el valor que entregas"></textarea></label><div class="flex flex-col gap-3 md:col-span-2 sm:flex-row sm:items-center"><button id="createProductButton" class="gold-button rounded-xl px-5 py-3 text-xs font-bold transition" type="submit">Crear producto</button><p id="productMessage" class="text-xs text-zinc-500" role="status"></p></div></form></div><div class="glass overflow-hidden rounded-2xl"><div class="flex items-center justify-between border-b border-white/[.06] px-5 py-4"><div><h3 class="text-sm font-bold">Productos activos</h3><p class="mt-1 text-[10px] text-zinc-500">Enlaces directos listos para compartir</p></div><span id="productCount" class="rounded-full bg-white/[.05] px-2.5 py-1 text-[10px] text-zinc-400">0 productos</span></div><div class="overflow-x-auto"><table class="w-full min-w-[700px] text-left text-xs"><thead class="bg-white/[.02] text-[9px] uppercase tracking-[.13em] text-zinc-600"><tr><th class="px-5 py-3">Producto</th><th class="px-5 py-3">Tipo</th><th class="px-5 py-3">Precio</th><th class="px-5 py-3 text-right">Checkout</th></tr></thead><tbody id="productsTable" class="divide-y divide-white/[.05]"><tr><td colspan="4" class="px-5 py-8 text-center text-zinc-600">Cargando catálogo…</td></tr></tbody></table></div></div></section>
+
+        <section id="view-orders" class="page-view hidden space-y-6"><div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Operaciones</p><h2 class="mt-2 font-display text-2xl font-bold">Pedidos &amp; Transacciones</h2><p class="mt-2 text-sm text-zinc-500">Audita pagos y revisa comprobantes antes de aprobar.</p></div><div class="flex flex-wrap gap-2"><select id="gatewayFilter" class="field !w-auto !py-2.5 text-[10px]" aria-label="Filtrar pasarela"><option value="all">Todas las pasarelas</option><option value="mercadopago">Mercado Pago</option><option value="usdt">USDT</option></select><select id="transactionFilter" class="field !w-auto !py-2.5 text-[10px]" aria-label="Filtrar estado"><option value="all">Todos los estados</option><option value="pending">Pendientes</option><option value="approved">Aprobados</option><option value="rejected">Rechazados</option></select></div></div><div class="glass overflow-hidden rounded-2xl"><div class="overflow-x-auto"><table class="w-full min-w-[850px] text-left text-xs"><thead class="bg-white/[.02] text-[9px] uppercase tracking-[.13em] text-zinc-600"><tr><th class="px-5 py-4">Fecha</th><th class="px-5 py-4">Pedido</th><th class="px-5 py-4">Pasarela</th><th class="px-5 py-4">Monto</th><th class="px-5 py-4">Comprobante</th><th class="px-5 py-4">Estado</th><th class="px-5 py-4 text-right">Acciones</th></tr></thead><tbody id="transactionsTable" class="divide-y divide-white/[.05]"><tr><td colspan="7" class="px-5 py-9 text-center text-zinc-600">Cargando transacciones…</td></tr></tbody></table></div></div></section>
+
+        <section id="view-checkouts" class="page-view hidden space-y-6"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Experiencia de compra</p><h2 class="mt-2 font-display text-2xl font-bold">Landings &amp; Checkouts</h2><p class="mt-2 text-sm text-zinc-500">Comparte un checkout directo para cada producto activo.</p></div><div id="checkoutLinks" class="grid gap-3 lg:grid-cols-2"></div><div class="glass rounded-2xl p-5 text-[11px] leading-6 text-zinc-500">El constructor de landings personalizadas y plantillas aún no está conectado. Los checkouts actuales usan la página segura de pago de Nómada.</div></section>
+        <section id="view-files" class="page-view hidden space-y-6"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Entrega digital</p><h2 class="mt-2 font-display text-2xl font-bold">Archivos &amp; Entrega</h2><p class="mt-2 text-sm text-zinc-500">Gestiona enlaces de acceso pospago de tus infoproductos.</p></div><div class="glass rounded-2xl p-5"><div id="filesList" class="divide-y divide-white/[.05]"></div></div><p class="text-[10px] text-zinc-600">La entrega automática se habilita únicamente después de verificar el pago.</p></section>
+        <section id="view-clients" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Relaciones</p><h2 class="mt-2 font-display text-2xl font-bold">Clientes</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="users-round" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Directorio de clientes</p><p class="mx-auto mt-2 max-w-md text-xs leading-5 text-zinc-600">El esquema actual registra ventas pero no conserva perfiles de compradores. Esta vista se habilitará al conectar un modelo de clientes.</p></div></section>
+        <section id="view-carts" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Recuperación</p><h2 class="mt-2 font-display text-2xl font-bold">Carritos abandonados</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="shopping-cart" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Eventos de checkout no conectados</p><p class="mx-auto mt-2 max-w-md text-xs leading-5 text-zinc-600">La API actual no registra sesiones de carrito ni visitas incompletas. Conecta eventos de checkout para medir y recuperar abandonos.</p></div></section>
+        <section id="view-conversion" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Optimización</p><h2 class="mt-2 font-display text-2xl font-bold">Métricas de conversión</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="chart-no-axes-combined" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Falta conectar analítica de visitas</p><p class="mx-auto mt-2 max-w-md text-xs leading-5 text-zinc-600">Se muestran las ventas confirmadas. La tasa de conversión requiere eventos de visitas y checkouts iniciados, que hoy no recopila la API.</p></div></section>
+        <section id="view-abandonment" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Optimización</p><h2 class="mt-2 font-display text-2xl font-bold">Tasa de abandono</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="chart-no-axes-column-increasing" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Sin eventos de abandono</p><p class="mt-2 text-xs text-zinc-600">No calculamos tasas a partir de ventas únicamente para evitar métricas engañosas.</p></div></section>
+        <section id="view-tests" class="page-view hidden"><div class="mb-5"><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Optimización</p><h2 class="mt-2 font-display text-2xl font-bold">Tests A/B</h2></div><div class="glass rounded-2xl border-dashed p-8 text-center"><i data-lucide="flask-conical" class="mx-auto h-8 w-8 text-zinc-600"></i><p class="mt-4 text-sm font-semibold text-zinc-300">Experimentación próximamente</p><p class="mt-2 text-xs text-zinc-600">Las variantes y su medición requieren instrumentar eventos en las páginas de checkout.</p></div></section>
+        <section id="view-account" class="page-view hidden space-y-5"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Preferencias</p><h2 class="mt-2 font-display text-2xl font-bold">Configuración de cuenta</h2></div><div class="glass rounded-2xl p-5 sm:p-7"><p class="text-xs text-zinc-500">Sesión autenticada con Supabase</p><p id="accountEmail" class="mt-2 text-sm font-semibold text-zinc-200"></p><p class="mt-1 text-[10px] text-zinc-600">ID del comercio</p><code id="accountTenant" class="mt-1 block break-all text-xs text-[#FFD84D]"></code><button class="logout-action mt-6 rounded-xl border border-red-500/20 px-4 py-2.5 text-xs font-semibold text-red-300 transition hover:bg-red-500/[.08]">Cerrar sesión en este dispositivo</button></div></section>
+        <section id="view-integrations" class="page-view hidden space-y-5"><div><p class="text-[10px] font-bold uppercase tracking-[.2em] text-[#FFC600]">Conexiones</p><h2 class="mt-2 font-display text-2xl font-bold">Integraciones</h2></div><div class="grid gap-3 md:grid-cols-2"><article class="glass rounded-2xl p-5"><div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-300"><i data-lucide="database" class="h-5 w-5"></i></span><div><p class="text-sm font-semibold">Supabase</p><p class="text-[10px] text-zinc-500">Autenticación y datos de comercio</p></div><span class="ml-auto text-[9px] text-emerald-300">Conectado</span></div></article><article class="glass rounded-2xl p-5"><div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-sky-500/10 text-sky-300"><i data-lucide="credit-card" class="h-5 w-5"></i></span><div><p class="text-sm font-semibold">Mercado Pago</p><p class="text-[10px] text-zinc-500">Preferencias y notificaciones</p></div><span class="ml-auto text-[9px] text-zinc-500">Estado no disponible</span></div><p class="mt-4 text-[10px] leading-5 text-zinc-600">La API no expone el estado de conexión de credenciales para proteger secretos.</p></article><article class="glass rounded-2xl p-5 md:col-span-2"><div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-violet-500/10 text-violet-300"><i data-lucide="activity" class="h-5 w-5"></i></span><div><p class="text-sm font-semibold">Analítica de checkout</p><p class="text-[10px] text-zinc-500">Visitantes, países, conversión, carritos y tests A/B</p></div><span class="ml-auto text-[9px] text-zinc-500">Pendiente de instrumentación</span></div></article></div></section>
+      </main>
+      <footer class="border-t border-white/[.05] px-4 py-5 text-center text-[9px] tracking-wide text-zinc-700 sm:px-7">NÓMADA PAY <span class="px-1">·</span> Tu negocio, sin fronteras</footer>
+    </div>
+  </div>
+
+  <div id="proofModal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/80 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="proofModalTitle">
+    <div class="glass w-full max-w-3xl rounded-2xl p-4 sm:p-6"><div class="flex items-center justify-between"><div><h2 id="proofModalTitle" class="font-display text-sm font-bold">Comprobante de pago</h2><p class="mt-1 text-[10px] text-zinc-500">Vista previa segura</p></div><button id="closeProofModal" class="rounded-lg border border-white/10 p-2 text-zinc-400 hover:text-white" aria-label="Cerrar"><i data-lucide="x" class="h-4 w-4"></i></button></div><div class="mt-4 grid min-h-[220px] place-items-center overflow-hidden rounded-xl bg-black/30"><img id="proofImage" class="hidden max-h-[65vh] max-w-full object-contain" alt="Comprobante de la transacción"><iframe id="proofFrame" class="hidden h-[65vh] w-full border-0" title="Documento del comprobante"></iframe><p id="proofFallback" class="hidden p-8 text-center text-xs text-zinc-500">No se puede previsualizar este comprobante. <a id="proofOpenLink" href="#" target="_blank" rel="noopener noreferrer" class="text-[#FFD84D] underline">Abrir en otra pestaña</a></p></div><div class="mt-4 flex justify-end"><a id="proofOpenLinkSecondary" href="#" target="_blank" rel="noopener noreferrer" class="rounded-lg border border-white/10 px-3 py-2 text-[10px] text-zinc-300 hover:border-[#FFC600]/30 hover:text-[#FFD84D]">Abrir archivo</a></div></div>
   </div>
 
   <script>
     let supabaseClient;
     let clienteId = 'default';
-    let displayedUserId;
     let transacciones = [];
     let productos = [];
-
+    let configuracion = {};
+    let salesChart;
+    let signupMode = false;
+    let activeUserId;
+    const titles = {
+      overview: 'Visión general', missions: 'Racha Nómada', orders: 'Pedidos / Transacciones',
+      clients: 'Clientes', carts: 'Carritos abandonados', products: 'Productos digitales',
+      gateway: 'Pasarela · Wallets & QR', checkouts: 'Landings & Checkouts', files: 'Archivos & Entrega',
+      conversion: 'Métricas de conversión', abandonment: 'Tasa de abandono', tests: 'Tests A/B',
+      account: 'Configuración de cuenta', integrations: 'Integraciones',
+    };
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
     })[char]);
+    const dinero = (amount, currency = 'ARS') => new Intl.NumberFormat('es-AR', {
+      style: 'currency', currency, maximumFractionDigits: 2,
+    }).format(Number(amount) || 0);
 
     const api = async (path, options = {}) => {
-      const headers = new Headers(options.headers || {});
       const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
       if (sessionError) throw sessionError;
       if (!session) throw new Error('Tu sesión expiró. Inicia sesión otra vez.');
-      headers.set('Authorization', 'Bearer ' + session.access_token);
+      const headers = new Headers(options.headers || {});
+      headers.set('Authorization', `Bearer ${session.access_token}`);
       if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
       const response = await fetch(path, { ...options, headers });
-      const payload = await response.json().catch(() => ({}));
+      const result = await response.json().catch(() => ({}));
       if (response.status === 401) {
         await supabaseClient.auth.signOut();
-        throw new Error(payload.error || 'La sesión expiró. Inicia sesión otra vez.');
+        throw new Error(result.error || 'La sesión expiró. Inicia sesión otra vez.');
       }
-      if (!response.ok) throw new Error(payload.error || 'No se pudo completar la solicitud');
-      return payload;
+      if (!response.ok) throw new Error(result.error || 'No se pudo completar la solicitud');
+      return result;
     };
 
-    const mostrarMensaje = (element, text, isError = false) => {
-      element.textContent = text;
-      element.className = `text-sm ${isError ? 'text-red-400' : 'text-emerald-400'}`;
-    };
-
-    function mostrarLogin(error = '') {
-      displayedUserId = null;
-      document.getElementById('dashboardApp').classList.add('hidden');
-      document.getElementById('loginScreen').classList.remove('hidden');
-      const errorElement = document.getElementById('loginError');
-      errorElement.textContent = error;
-      errorElement.classList.toggle('hidden', !error);
+    function showLoginError(message = '') {
+      const element = document.getElementById('loginError');
+      element.textContent = message;
+      element.classList.toggle('hidden', !message);
     }
 
-    function mostrarDashboard(session) {
-      clienteId = session.user.app_metadata?.cliente_id
-        || session.user.app_metadata?.tienda_id
-        || session.user.id
-        || 'default';
-      if (displayedUserId === session.user.id) return;
-      displayedUserId = session.user.id;
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('dashboardApp').classList.remove('hidden');
-      document.getElementById('tenantLabel').textContent = session.user.email || clienteId;
-      cargarDashboard().catch(mostrarErrorGlobal);
+    function showGlobalError(error) {
+      const element = document.getElementById('globalMessage');
+      element.textContent = error instanceof Error ? error.message : 'Ocurrió un error inesperado.';
+      element.classList.remove('hidden');
     }
 
-    function mostrarErrorGlobal(error) {
-      const message = document.getElementById('globalMessage');
-      message.textContent = error instanceof Error ? error.message : 'Ocurrió un error';
-      message.classList.remove('hidden');
+    function showStatus(element, message, isError = false) {
+      element.textContent = message;
+      element.className = `text-xs ${isError ? 'text-red-300' : 'text-emerald-300'}`;
     }
 
-    async function cargarDashboard() {
-      document.getElementById('globalMessage').classList.add('hidden');
-      await Promise.all([cargarConfiguracion(), cargarProductos(), cargarTransacciones()]);
-      document.getElementById('lastUpdated').textContent = `Actualizado ${new Date().toLocaleTimeString('es-AR')}`;
+    async function signOut() {
+      const { error } = await supabaseClient.auth.signOut();
+      if (error) showGlobalError(error);
     }
 
-    async function cargarConfiguracion() {
-      const config = await api(`/api/config/${encodeURIComponent(clienteId)}`);
-      const form = document.getElementById('settingsForm');
-      for (const field of ['wallet_trc20', 'wallet_bep20', 'qr_trc20_url', 'qr_bep20_url', 'cotizacion_usd_ars']) {
-        form.elements[field].value = config[field] ?? '';
+    function setActiveView(view) {
+      const safeView = document.getElementById(`view-${view}`) ? view : 'overview';
+      document.querySelectorAll('.page-view').forEach((section) => section.classList.add('hidden'));
+      document.getElementById(`view-${safeView}`).classList.remove('hidden');
+      document.querySelectorAll('.nav-link').forEach((link) => {
+        link.classList.toggle('active', link.dataset.view === safeView);
+        if (link.dataset.view === safeView) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      });
+      document.getElementById('pageTitle').textContent = titles[safeView] || 'Panel de control';
+      document.getElementById('breadcrumb').textContent = titles[safeView] || 'Panel';
+      document.getElementById('sidebar').classList.remove('sidebar-open');
+      document.getElementById('mobileOverlay').classList.add('hidden');
+      if (safeView === 'overview' && salesChart) requestAnimationFrame(() => salesChart.resize());
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderChart() {
+      if (!window.Chart) return;
+      const context = document.getElementById('salesChart');
+      if (!context) return;
+      const dayValues = Array.from({ length: 7 }, (_, index) => {
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() - (6 - index));
+        const nextDate = new Date(date);
+        nextDate.setDate(date.getDate() + 1);
+        const sales = transacciones.filter((tx) => {
+          const created = new Date(tx.created_at);
+          return tx.estado === 'approved' && created >= date && created < nextDate;
+        });
+        const ars = sales.filter((tx) => tx.pasarela !== 'binance').reduce((sum, tx) => sum + Number(tx.monto || 0), 0);
+        const usdt = sales.filter((tx) => tx.pasarela === 'binance').reduce((sum, tx) => sum + Number(tx.monto || 0), 0);
+        return ars + usdt * Number(configuracion.cotizacion_usd_ars || 0);
+      });
+      if (salesChart) salesChart.destroy();
+      const context2d = context.getContext('2d');
+      const gradient = context2d.createLinearGradient(0, 0, 0, 260);
+      gradient.addColorStop(0, 'rgba(255,198,0,.24)');
+      gradient.addColorStop(1, 'rgba(255,198,0,0)');
+      salesChart = new Chart(context, {
+        type: 'line',
+        data: {
+          labels: Array.from({ length: 7 }, (_, index) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (6 - index));
+            return new Intl.DateTimeFormat('es-AR', { weekday: 'short', day: 'numeric' }).format(date);
+          }),
+          datasets: [{
+            data: dayValues, fill: true, backgroundColor: gradient, borderColor: '#FFC600',
+            borderWidth: 2, tension: .38, pointRadius: 3, pointHoverRadius: 5,
+            pointBackgroundColor: '#FFC600', pointBorderColor: '#151515', pointBorderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: '#18181b', borderColor: 'rgba(255,198,0,.2)', borderWidth: 1, titleColor: '#f4f4f5', bodyColor: '#FFD84D', displayColors: false, callbacks: { label: (contextItem) => dinero(contextItem.raw) } },
+          },
+          scales: {
+            x: { grid: { display: false }, border: { display: false }, ticks: { color: '#71717a', font: { family: 'Inter', size: 10 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.045)' }, border: { display: false, displayOnChartArea: false }, ticks: { color: '#71717a', font: { family: 'Inter', size: 9 }, callback: (value) => new Intl.NumberFormat('es-AR', { notation: 'compact' }).format(value) } },
+          },
+        },
+      });
+    }
+
+    function calculateStreak() {
+      const activity = new Set(transacciones
+        .filter((tx) => tx.estado === 'approved' && tx.created_at)
+        .map((tx) => new Date(tx.created_at).toISOString().slice(0, 10)));
+      const cursor = new Date();
+      cursor.setHours(0, 0, 0, 0);
+      if (!activity.has(cursor.toISOString().slice(0, 10))) cursor.setDate(cursor.getDate() - 1);
+      let days = 0;
+      while (activity.has(cursor.toISOString().slice(0, 10))) {
+        days += 1;
+        cursor.setDate(cursor.getDate() - 1);
       }
+      return days;
     }
 
-    function urlCheckout(producto) {
-      const url = new URL('/prueba.html', window.location.origin);
-      url.searchParams.set('producto_id', producto.id);
+    function renderMissions() {
+      const walletDone = Boolean(configuracion.wallet_trc20 && configuracion.wallet_bep20);
+      const productDone = productos.length > 0;
+      const missions = [
+        { label: 'Completar wallets', done: walletDone, view: 'gateway', icon: 'wallet' },
+        { label: 'Publicar un e-book', done: productDone, view: 'products', icon: 'book-open' },
+        { label: 'Conectar tu web', done: false, view: 'integrations', icon: 'globe-2' },
+      ];
+      const points = transacciones.filter((tx) => tx.estado === 'approved').length * 25
+        + missions.filter((mission) => mission.done).length * 50;
+      const streak = calculateStreak();
+      document.getElementById('salesStreak').textContent = `${streak} ${streak === 1 ? 'día' : 'días'}`;
+      document.getElementById('pointsTotal').textContent = `${points} puntos`;
+      document.getElementById('missionsStreak').textContent = `${streak} ${streak === 1 ? 'día' : 'días'}`;
+      document.getElementById('missionsPoints').textContent = `${points} puntos · ventas aprobadas y misiones completadas`;
+      missions.forEach((mission, index) => {
+        const element = document.getElementById(['missionWallet', 'missionProduct', 'missionWeb'][index]);
+        const status = element.querySelector('.mission-status');
+        status.textContent = mission.done ? 'Completada · +50 puntos' : (index === 2 ? 'Configura retorno de pago' : 'Pendiente · +50 puntos');
+        status.className = `mission-status mt-1 block text-[9px] ${mission.done ? 'text-emerald-300' : 'text-zinc-600'}`;
+        element.classList.toggle('border-emerald-500/20', mission.done);
+      });
+      document.getElementById('missionsList').innerHTML = missions.map((mission) => `<button data-view="${mission.view}" class="flex items-center gap-3 rounded-xl border ${mission.done ? 'border-emerald-500/15 bg-emerald-500/[.04]' : 'border-white/[.07] bg-black/15'} p-4 text-left transition hover:border-[#FFC600]/25"><span class="grid h-9 w-9 place-items-center rounded-lg ${mission.done ? 'bg-emerald-500/10 text-emerald-300' : 'bg-white/[.04] text-zinc-500'}"><i data-lucide="${mission.done ? 'check' : mission.icon}" class="h-4 w-4"></i></span><span><span class="block text-xs font-semibold text-zinc-200">${escapeHtml(mission.label)}</span><span class="mt-1 block text-[10px] ${mission.done ? 'text-emerald-300' : 'text-zinc-500'}">${mission.done ? 'Misión completada' : 'Completa esta misión'}</span></span><i data-lucide="arrow-up-right" class="ml-auto h-3.5 w-3.5 text-zinc-600"></i></button>`).join('');
+      document.querySelectorAll('#missionsList [data-view]').forEach((button) => button.addEventListener('click', () => setActiveView(button.dataset.view)));
+    }
+
+    function renderBadges(totalARS) {
+      const targets = [
+        { name: 'Nómada 100K', goal: 100000, icon: 'compass' },
+        { name: 'Nómada 250K', goal: 250000, icon: 'milestone' },
+        { name: 'Nómada 1M', goal: 1000000, icon: 'crown' },
+      ];
+      document.getElementById('badgesGrid').innerHTML = targets.map((badge) => {
+        const percent = Math.min(100, Math.round(totalARS / badge.goal * 100));
+        const completed = percent >= 100;
+        return `<article class="rounded-xl border border-white/[.06] bg-black/15 p-4"><div class="flex items-center gap-3"><span class="medal grid h-10 w-10 place-items-center rounded-full text-[#392600]"><i data-lucide="${badge.icon}" class="h-4 w-4"></i></span><span class="min-w-0 flex-1"><span class="block text-xs font-bold text-zinc-200">${badge.name}</span><span class="mt-1 block text-[10px] text-zinc-600">${completed ? 'Hito desbloqueado' : `${dinero(badge.goal - totalARS)} para desbloquear`}</span></span><span class="text-[10px] font-semibold ${completed ? 'text-[#FFD84D]' : 'text-zinc-500'}">${percent}%</span></div><div class="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[.06]"><div class="h-full rounded-full bg-gradient-to-r from-[#9b6800] via-[#FFC600] to-[#ffe998] transition-all" style="width:${percent}%"></div></div></article>`;
+      }).join('');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderOverview() {
+      const approved = transacciones.filter((tx) => tx.estado === 'approved');
+      const today = new Date();
+      const isToday = (value) => {
+        const date = new Date(value);
+        return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+      };
+      const isThisMonth = (value) => {
+        const date = new Date(value);
+        return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth();
+      };
+      const equivalent = (tx) => Number(tx.monto || 0) * (tx.pasarela === 'binance' ? Number(configuracion.cotizacion_usd_ars || 0) : 1);
+      const approvedToday = approved.filter((tx) => isToday(tx.created_at));
+      const approvedMonth = approved.filter((tx) => isThisMonth(tx.created_at));
+      const allArs = approved.reduce((sum, tx) => sum + equivalent(tx), 0);
+      const todayArs = approvedToday.filter((tx) => tx.pasarela !== 'binance').reduce((sum, tx) => sum + Number(tx.monto || 0), 0);
+      const todayUsdt = approvedToday.filter((tx) => tx.pasarela === 'binance').reduce((sum, tx) => sum + Number(tx.monto || 0), 0);
+      const monthArs = approvedMonth.reduce((sum, tx) => sum + equivalent(tx), 0);
+      const totalFees = approved.filter((tx) => tx.pasarela !== 'binance').reduce((sum, tx) => sum + Number(tx.comision || 0), 0);
+      const pending = transacciones.filter((tx) => tx.estado === 'pending' && (tx.pasarela === 'binance' || tx.comprobante_path));
+      const average = approved.length ? allArs / approved.length : 0;
+      document.getElementById('metricTodayArs').textContent = dinero(todayArs);
+      document.getElementById('metricTodayUsdt').textContent = `${todayUsdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
+      document.getElementById('todayCount').textContent = String(approvedToday.length);
+      document.getElementById('metricMonth').textContent = dinero(monthArs);
+      document.getElementById('monthCount').textContent = `${approvedMonth.length} ventas`;
+      document.getElementById('metricNet').textContent = dinero(Math.max(0, allArs - totalFees));
+      document.getElementById('metricTicket').textContent = dinero(average);
+      document.getElementById('ordersBadge').textContent = String(pending.length);
+      document.getElementById('ordersBadge').classList.toggle('hidden', pending.length === 0);
+      document.getElementById('lastUpdated').textContent = `Actualizado ${new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`;
+      document.getElementById('badgeProgressLabel').textContent = `Acumulado: ${dinero(allArs)} · ventas aprobadas`;
+      renderBadges(allArs);
+      renderMissions();
+      renderChart();
+    }
+
+    function checkoutUrl(product) {
+      const url = new URL('/checkout.html', window.location.origin);
+      url.searchParams.set('id', product.id);
       return url.href;
     }
 
-    async function cargarProductos() {
-      productos = await api(`/api/productos/${encodeURIComponent(clienteId)}`);
-      const tbody = document.getElementById('productsTable');
+    function renderProducts() {
+      document.getElementById('productCount').textContent = `${productos.length} ${productos.length === 1 ? 'producto' : 'productos'}`;
+      const table = document.getElementById('productsTable');
+      const checkouts = document.getElementById('checkoutLinks');
+      const files = document.getElementById('filesList');
       if (!productos.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="px-5 py-8 text-center text-zinc-500">Todavía no hay productos activos.</td></tr>';
+        table.innerHTML = '<tr><td colspan="4" class="px-5 py-9 text-center text-zinc-600">Aún no tienes productos activos. Crea el primero para compartir tu checkout.</td></tr>';
+        checkouts.innerHTML = '<div class="glass rounded-2xl p-6 text-xs text-zinc-500">Crea un producto digital para generar su enlace directo de checkout.</div>';
+        files.innerHTML = '<p class="py-6 text-center text-xs text-zinc-600">Los enlaces de entrega aparecerán al publicar productos.</p>';
         return;
       }
-      tbody.innerHTML = productos.map((producto) => {
-        const checkout = urlCheckout(producto);
-        const tipo = { ebook: 'E-book', curso: 'Curso', matricula: 'Matrícula' }[producto.tipo] || producto.tipo;
-        return `<tr>
-          <td class="px-5 py-4"><div class="font-semibold text-white">${escapeHtml(producto.titulo)}</div><div class="mt-1 text-xs text-zinc-500">${escapeHtml(producto.descripcion || '')}</div></td>
-          <td class="px-5 py-4 text-zinc-300">${escapeHtml(tipo)}</td>
-          <td class="px-5 py-4 whitespace-nowrap text-xs text-zinc-300">${Number(producto.precio_ars).toLocaleString('es-AR')} ARS <span class="text-zinc-600">/</span> ${Number(producto.precio_usd).toLocaleString('en-US')} USD</td>
-          <td class="px-5 py-4 text-right"><div class="flex justify-end gap-2"><a href="${escapeHtml(checkout)}" target="_blank" rel="noopener noreferrer" class="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-[#FFC600] hover:text-[#FFC600]">Abrir</a><button type="button" data-copy="${escapeHtml(checkout)}" class="copy-link rounded-lg bg-[#FFC600]/10 px-3 py-2 text-xs font-semibold text-[#FFC600] hover:bg-[#FFC600]/20">Copiar link</button></div></td>
-        </tr>`;
+      table.innerHTML = productos.map((product) => {
+        const url = checkoutUrl(product);
+        return `<tr><td class="px-5 py-4"><span class="font-semibold text-zinc-200">${escapeHtml(product.titulo)}</span><span class="mt-1 block text-[10px] text-zinc-600">${escapeHtml(product.descripcion || '')}</span></td><td class="px-5 py-4 text-zinc-400">${escapeHtml(product.tipo || 'ebook')}</td><td class="whitespace-nowrap px-5 py-4 text-[10px] text-zinc-400">${dinero(product.precio_ars)}<span class="px-1 text-zinc-700">/</span>${Number(product.precio_usd || 0).toFixed(2)} USD</td><td class="px-5 py-4 text-right"><button data-copy="${escapeHtml(url)}" class="copy-link rounded-lg border border-[#FFC600]/15 bg-[#FFC600]/[.05] px-3 py-2 text-[10px] font-semibold text-[#FFD84D] hover:bg-[#FFC600]/10"><i data-lucide="copy" class="mr-1 inline h-3 w-3"></i>Copiar enlace</button></td></tr>`;
       }).join('');
-      tbody.querySelectorAll('.copy-link').forEach((button) => {
-        button.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(button.dataset.copy);
-            button.textContent = 'Copiado';
-            setTimeout(() => { button.textContent = 'Copiar link'; }, 1500);
-          } catch {
-            mostrarErrorGlobal(new Error('El navegador no permitió copiar el enlace'));
-          }
-        });
+      checkouts.innerHTML = productos.map((product) => {
+        const url = checkoutUrl(product);
+        return `<article class="glass rounded-2xl p-5"><div class="flex items-start gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-[#FFC600]/10 text-[#FFD84D]"><i data-lucide="book-open" class="h-4 w-4"></i></span><div class="min-w-0 flex-1"><h3 class="truncate text-xs font-bold text-zinc-200">${escapeHtml(product.titulo)}</h3><p class="mt-1 text-[10px] text-zinc-500">${dinero(product.precio_ars)} · ${Number(product.precio_usd || 0).toFixed(2)} USD</p></div></div><div class="mt-4 flex gap-2"><input readonly value="${escapeHtml(url)}" class="field min-w-0 !py-2 text-[9px]"><button data-copy="${escapeHtml(url)}" class="copy-link shrink-0 rounded-lg bg-[#FFC600] px-3 text-[10px] font-bold text-black">Copiar</button></div></article>`;
+      }).join('');
+      files.innerHTML = productos.map((product) => `<div class="flex flex-col justify-between gap-2 py-4 sm:flex-row sm:items-center"><span><span class="block text-xs font-semibold text-zinc-200">${escapeHtml(product.titulo)}</span><span class="mt-1 block text-[10px] text-zinc-600">Entrega: ${escapeHtml(product.link_entrega || 'Archivo digital asociado')}</span></span><span class="rounded-full border border-emerald-500/15 px-2.5 py-1 text-[9px] text-emerald-300">Pospago</span></div>`).join('');
+      document.querySelectorAll('.copy-link').forEach((button) => button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(button.dataset.copy);
+          const original = button.innerHTML;
+          button.textContent = 'Copiado';
+          setTimeout(() => { button.innerHTML = original; if (window.lucide) window.lucide.createIcons(); }, 1400);
+        } catch { showGlobalError(new Error('El navegador no permitió copiar el enlace.')); }
+      }));
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function openProof(url, path) {
+      const modal = document.getElementById('proofModal');
+      const image = document.getElementById('proofImage');
+      const frame = document.getElementById('proofFrame');
+      const fallback = document.getElementById('proofFallback');
+      const isImage = /\.(jpe?g|png|webp)(?:\?|$)/i.test(path || url);
+      image.classList.add('hidden');
+      frame.classList.add('hidden');
+      fallback.classList.add('hidden');
+      document.getElementById('proofOpenLink').href = url;
+      document.getElementById('proofOpenLinkSecondary').href = url;
+      if (isImage) {
+        image.src = url;
+        image.classList.remove('hidden');
+        image.onerror = () => { image.classList.add('hidden'); fallback.classList.remove('hidden'); };
+      } else if (/\.pdf(?:\?|$)/i.test(path || url)) {
+        frame.src = url;
+        frame.classList.remove('hidden');
+        frame.onerror = () => { frame.classList.add('hidden'); fallback.classList.remove('hidden'); };
+      } else {
+        fallback.classList.remove('hidden');
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function renderTransactions() {
+      const stateFilter = document.getElementById('transactionFilter').value;
+      const gatewayFilter = document.getElementById('gatewayFilter').value;
+      const rows = transacciones.filter((tx) => {
+        const stateMatches = stateFilter === 'all' || tx.estado === stateFilter;
+        const isUsdt = tx.pasarela === 'binance';
+        const gatewayMatches = gatewayFilter === 'all' || (gatewayFilter === 'usdt' && isUsdt) || (gatewayFilter === 'mercadopago' && !isUsdt);
+        return stateMatches && gatewayMatches;
+      });
+      const table = document.getElementById('transactionsTable');
+      if (!rows.length) {
+        table.innerHTML = '<tr><td colspan="7" class="px-5 py-10 text-center text-zinc-600">No hay transacciones para este filtro.</td></tr>';
+        return;
+      }
+      table.innerHTML = rows.map((tx) => {
+        const approved = tx.estado === 'approved';
+        const rejected = tx.estado === 'rejected';
+        const isUsdt = tx.pasarela === 'binance';
+        const badgeClass = approved ? 'border-emerald-500/15 bg-emerald-500/[.06] text-emerald-300' : rejected ? 'border-red-500/15 bg-red-500/[.06] text-red-300' : 'border-amber-500/15 bg-amber-500/[.06] text-amber-300';
+        const date = tx.created_at ? new Date(tx.created_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+        const amount = `${Number(tx.monto || 0).toLocaleString(isUsdt ? 'en-US' : 'es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${isUsdt ? 'USDT' : 'ARS'}`;
+        const proof = tx.comprobante_url
+          ? `<button data-proof="${escapeHtml(tx.comprobante_url)}" data-path="${escapeHtml(tx.comprobante_path || '')}" class="preview-proof flex items-center gap-2 text-left text-[10px] font-semibold text-[#FFD84D] hover:text-[#FFC600]">${/\.(jpe?g|png|webp)$/i.test(tx.comprobante_path || '') ? `<img src="${escapeHtml(tx.comprobante_url)}" class="h-8 w-8 rounded-md border border-white/10 object-cover" alt="">` : '<i data-lucide="file-text" class="h-4 w-4"></i>'}Vista previa</button>`
+          : tx.payment_id ? `<span class="font-mono text-[9px] text-zinc-500" title="${escapeHtml(tx.payment_id)}">${escapeHtml(String(tx.payment_id).slice(0, 19))}</span>` : '<span class="text-[10px] text-zinc-700">Sin adjunto</span>';
+        const actions = tx.estado === 'pending' ? `<div class="flex justify-end gap-1.5"><button data-id="${escapeHtml(tx.id)}" data-state="approved" class="state-button rounded-lg bg-emerald-500/[.08] px-2.5 py-2 text-[9px] font-bold text-emerald-300 hover:bg-emerald-500/15">Aprobar</button><button data-id="${escapeHtml(tx.id)}" data-state="rejected" class="state-button rounded-lg border border-white/[.07] px-2.5 py-2 text-[9px] text-zinc-500 hover:border-red-500/20 hover:text-red-300">Rechazar</button></div>` : '<span class="block text-right text-zinc-700">—</span>';
+        return `<tr class="transition hover:bg-white/[.015]"><td class="whitespace-nowrap px-5 py-4 text-[10px] text-zinc-500">${escapeHtml(date)}</td><td class="px-5 py-4"><span class="block max-w-[200px] truncate text-[11px] font-semibold text-zinc-200">${escapeHtml(tx.titulo || 'Pago')}</span><span class="mt-1 block text-[9px] text-zinc-600">ID ${escapeHtml(tx.id)}</span></td><td class="px-5 py-4"><span class="rounded-md border ${isUsdt ? 'border-[#FFC600]/15 bg-[#FFC600]/[.05] text-[#FFD84D]' : 'border-sky-400/15 bg-sky-400/[.05] text-sky-300'} px-2 py-1 text-[9px]">${isUsdt ? 'USDT' : 'Mercado Pago'}</span></td><td class="whitespace-nowrap px-5 py-4 text-[10px] font-semibold text-zinc-200">${escapeHtml(amount)}</td><td class="px-5 py-4">${proof}</td><td class="px-5 py-4"><span class="rounded-md border ${badgeClass} px-2 py-1 text-[9px]">${approved ? 'Aprobado' : rejected ? 'Rechazado' : 'Pendiente'}</span></td><td class="px-5 py-4">${actions}</td></tr>`;
+      }).join('');
+      table.querySelectorAll('.state-button').forEach((button) => button.addEventListener('click', () => updateTransactionState(button.dataset.id, button.dataset.state)));
+      table.querySelectorAll('.preview-proof').forEach((button) => button.addEventListener('click', () => openProof(button.dataset.proof, button.dataset.path)));
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    async function loadConfiguration() {
+      const result = await api(`/api/config/${encodeURIComponent(clienteId)}`);
+      configuracion = Array.isArray(result) ? (result[0] || {}) : result;
+      const form = document.getElementById('settingsForm');
+      ['wallet_trc20', 'wallet_bep20', 'qr_trc20_url', 'qr_bep20_url', 'cotizacion_usd_ars'].forEach((field) => {
+        form.elements[field].value = configuracion[field] ?? '';
       });
     }
 
-    const estadoLabel = (estado) => ({
-      approved: ['Aprobado', 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'],
-      rejected: ['Rechazado', 'border-red-500/30 bg-red-500/10 text-red-300'],
-      pending: ['Pendiente', 'border-amber-500/30 bg-amber-500/10 text-amber-300'],
-    }[estado] || [estado || 'Sin estado', 'border-zinc-700 bg-zinc-800 text-zinc-300']);
+    async function loadProducts() {
+      productos = await api(`/api/productos/${encodeURIComponent(clienteId)}`);
+      if (!Array.isArray(productos)) productos = [];
+      renderProducts();
+    }
 
-    async function cargarTransacciones() {
+    async function loadTransactions() {
       transacciones = await api(`/api/transacciones/${encodeURIComponent(clienteId)}`);
-      renderizarTransacciones();
+      if (!Array.isArray(transacciones)) transacciones = [];
+      renderTransactions();
+      renderOverview();
     }
 
-    function renderizarTransacciones() {
-      const filtro = document.getElementById('transactionFilter').value;
-      const pasarelaFiltro = document.getElementById('gatewayFilter').value;
-      const tbody = document.getElementById('transactionsTable');
-      const aprobadas = transacciones.filter((item) => item.estado === 'approved');
-      const totalArs = aprobadas.filter((item) => item.pasarela !== 'binance').reduce((total, item) => total + Number(item.monto || 0), 0);
-      const totalUsdt = aprobadas.filter((item) => item.pasarela === 'binance').reduce((total, item) => total + Number(item.monto || 0), 0);
-      document.getElementById('metricArs').textContent = `$ ${totalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      document.getElementById('metricUsdt').textContent = `${totalUsdt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
-      document.getElementById('metricSales').textContent = String(aprobadas.length);
-      document.getElementById('metricPending').textContent = String(transacciones.filter((item) =>
-        item.estado === 'pending' && (item.pasarela === 'binance' || item.comprobante_path),
-      ).length);
-      const lista = transacciones.filter((item) => {
-        const coincideEstado = filtro === 'all' || item.estado === filtro;
-        const esUsdt = item.pasarela === 'binance';
-        const coincidePasarela = pasarelaFiltro === 'all'
-          || (pasarelaFiltro === 'usdt' && esUsdt)
-          || (pasarelaFiltro === 'mercadopago' && !esUsdt);
-        return coincideEstado && coincidePasarela;
-      });
-
-      if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-8 text-center text-zinc-500">No hay ventas para mostrar.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = lista.map((tx) => {
-        const [label, badge] = estadoLabel(tx.estado);
-        const fecha = tx.created_at ? new Date(tx.created_at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
-        const cripto = tx.pasarela === 'binance';
-        const monto = `${Number(tx.monto || 0).toLocaleString(cripto ? 'en-US' : 'es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cripto ? 'USDT' : 'ARS'}`;
-        const esImagenComprobante = /\.(jpe?g|png|webp)$/i.test(tx.comprobante_path || '');
-        const comprobante = tx.comprobante_url
-          ? `<a href="${escapeHtml(tx.comprobante_url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 font-semibold text-[#FFC600] underline underline-offset-2">${esImagenComprobante ? `<img src="${escapeHtml(tx.comprobante_url)}" alt="Vista previa del comprobante" class="h-10 w-10 rounded-lg border border-zinc-700 object-cover">` : ''}<span>Ver comprobante</span></a>`
-          : tx.payment_id
-            ? `<span class="font-mono text-xs text-zinc-400" title="${escapeHtml(tx.payment_id)}">${escapeHtml(tx.payment_id.slice(0, 18))}</span>`
-            : '<span class="text-zinc-600">Sin adjunto</span>';
-        const acciones = tx.estado === 'pending'
-          ? `<div class="flex justify-end gap-2"><button data-id="${escapeHtml(tx.id)}" data-state="approved" class="state-button rounded-lg bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20">Aprobar</button><button data-id="${escapeHtml(tx.id)}" data-state="rejected" class="state-button rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-400 hover:border-red-500/40 hover:text-red-300">Rechazar</button></div>`
-          : '<span class="block text-right text-xs text-zinc-600">—</span>';
-        return `<tr>
-          <td class="px-5 py-4 whitespace-nowrap text-xs text-zinc-400">${escapeHtml(fecha)}</td>
-          <td class="px-5 py-4"><div class="font-semibold text-zinc-200">${escapeHtml(tx.titulo || 'Pago')}</div><div class="mt-1 text-[11px] uppercase tracking-wider ${cripto ? 'text-[#FFC600]' : 'text-sky-300'}">${cripto ? 'USDT' : 'Mercado Pago'}</div></td>
-          <td class="px-5 py-4 whitespace-nowrap font-semibold text-white">${escapeHtml(monto)}</td>
-          <td class="px-5 py-4">${comprobante}</td>
-          <td class="px-5 py-4"><span class="rounded-md border px-2.5 py-1 text-xs font-semibold ${badge}">${escapeHtml(label)}</span></td>
-          <td class="px-5 py-4">${acciones}</td>
-        </tr>`;
-      }).join('');
-
-      tbody.querySelectorAll('.state-button').forEach((button) => {
-        button.addEventListener('click', () => actualizarEstado(button.dataset.id, button.dataset.state));
-      });
+    async function loadDashboard() {
+      document.getElementById('globalMessage').classList.add('hidden');
+      await Promise.all([loadConfiguration(), loadProducts(), loadTransactions()]);
+      renderOverview();
     }
 
-    async function actualizarEstado(id, estado) {
-      if (!window.confirm(`¿Quieres ${estado === 'approved' ? 'aprobar' : 'rechazar'} este pago?`)) return;
+    async function updateTransactionState(id, state) {
+      const action = state === 'approved' ? 'aprobar' : 'rechazar';
+      if (!window.confirm(`¿Confirmas ${action} este pago?`)) return;
       try {
         await api(`/api/transacciones/${encodeURIComponent(id)}/estado`, {
-          method: 'PATCH',
-          body: JSON.stringify({ estado }),
+          method: 'PATCH', body: JSON.stringify({ estado: state }),
         });
-        await cargarTransacciones();
+        await loadTransactions();
+      } catch (error) { showGlobalError(error); }
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      showLoginError();
+      const button = document.getElementById('loginSubmit');
+      button.disabled = true;
+      try {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const result = signupMode
+          ? await supabaseClient.auth.signUp({ email, password })
+          : await supabaseClient.auth.signInWithPassword({ email, password });
+        if (result.error) throw result.error;
+        if (signupMode && !result.data.session) {
+          showLoginError('Cuenta creada. Revisa tu correo para confirmar el registro y luego inicia sesión.');
+          signupMode = false;
+          document.getElementById('loginSubmit').querySelector('span').textContent = 'Iniciar sesión';
+          document.getElementById('registerToggle').innerHTML = '¿Primera vez? <span class="font-semibold text-zinc-300">Crear cuenta</span>';
+        }
       } catch (error) {
-        mostrarErrorGlobal(error);
+        showLoginError(error instanceof Error ? error.message : 'No se pudo iniciar sesión.');
+      } finally {
+        button.disabled = false;
       }
     }
 
-    document.getElementById('loginForm').addEventListener('submit', async (event) => {
+    function renderAuthentication(session) {
+      const loginScreen = document.getElementById('loginScreen');
+      const app = document.getElementById('dashboardApp');
+      if (!session) {
+        activeUserId = null;
+        loginScreen.classList.remove('hidden');
+        app.classList.add('hidden');
+        return;
+      }
+      clienteId = session.user.app_metadata?.cliente_id || session.user.app_metadata?.tienda_id || session.user.id || 'default';
+      if (activeUserId === session.user.id) return;
+      activeUserId = session.user.id;
+      loginScreen.classList.add('hidden');
+      app.classList.remove('hidden');
+      const email = session.user.email || 'Cuenta Nómada';
+      const avatar = email.slice(0, 1).toUpperCase();
+      document.getElementById('userName').textContent = email.split('@')[0];
+      document.getElementById('userEmail').textContent = email;
+      document.getElementById('headerUser').textContent = email;
+      document.getElementById('userAvatar').textContent = avatar;
+      document.getElementById('accountEmail').textContent = email;
+      document.getElementById('accountTenant').textContent = clienteId;
+      document.getElementById('storeTenant').textContent = clienteId;
+      document.querySelectorAll('#storeSelector span span:first-child').forEach((element) => {
+        element.textContent = session.user.app_metadata?.store_name || 'Nómada Trading';
+      });
+      loadDashboard().catch(showGlobalError);
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    document.getElementById('registerToggle').addEventListener('click', () => {
+      signupMode = !signupMode;
+      document.getElementById('loginSubmit').querySelector('span').textContent = signupMode ? 'Crear cuenta' : 'Iniciar sesión';
+      document.getElementById('registerToggle').innerHTML = signupMode
+        ? '¿Ya tienes una cuenta? <span class="font-semibold text-zinc-300">Iniciar sesión</span>'
+        : '¿Primera vez? <span class="font-semibold text-zinc-300">Crear cuenta</span>';
+      showLoginError();
+    });
+    document.querySelectorAll('[data-view]').forEach((link) => link.addEventListener('click', (event) => {
       event.preventDefault();
-      const errorElement = document.getElementById('loginError');
-      errorElement.classList.add('hidden');
-      try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: document.getElementById('loginEmail').value,
-            password: document.getElementById('loginPassword').value,
-        });
-        if (error) throw error;
-        if (!data.session) throw new Error('Supabase no devolvió una sesión válida');
-        mostrarDashboard(data.session);
-      } catch (error) {
-        errorElement.textContent = error instanceof Error ? error.message : 'Error de conexión';
-        errorElement.classList.remove('hidden');
+      setActiveView(link.dataset.view);
+    }));
+    document.getElementById('openSidebar').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.add('sidebar-open');
+      document.getElementById('mobileOverlay').classList.remove('hidden');
+    });
+    document.getElementById('closeSidebar').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('sidebar-open');
+      document.getElementById('mobileOverlay').classList.add('hidden');
+    });
+    document.getElementById('mobileOverlay').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('sidebar-open');
+      document.getElementById('mobileOverlay').classList.add('hidden');
+    });
+    document.getElementById('refreshButton').addEventListener('click', () => loadDashboard().catch(showGlobalError));
+    document.getElementById('storeSelector').addEventListener('click', () => {
+      const menu = document.getElementById('storeMenu');
+      menu.classList.toggle('hidden');
+      document.getElementById('storeSelector').setAttribute('aria-expanded', String(!menu.classList.contains('hidden')));
+    });
+    document.getElementById('headerLogout').addEventListener('click', signOut);
+    document.getElementById('sidebarLogout').addEventListener('click', signOut);
+    document.querySelectorAll('.logout-action').forEach((button) => button.addEventListener('click', signOut));
+    document.getElementById('transactionFilter').addEventListener('change', renderTransactions);
+    document.getElementById('gatewayFilter').addEventListener('change', renderTransactions);
+    document.getElementById('closeProofModal').addEventListener('click', () => {
+      document.getElementById('proofModal').classList.add('hidden');
+      document.getElementById('proofModal').classList.remove('flex');
+      document.getElementById('proofImage').removeAttribute('src');
+      document.getElementById('proofFrame').removeAttribute('src');
+    });
+    document.getElementById('proofModal').addEventListener('click', (event) => {
+      if (event.target.id === 'proofModal') document.getElementById('closeProofModal').click();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !document.getElementById('proofModal').classList.contains('hidden')) {
+        document.getElementById('closeProofModal').click();
       }
     });
 
     document.getElementById('settingsForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
+      const button = document.getElementById('saveSettingsButton');
       const payload = Object.fromEntries(new FormData(form).entries());
       payload.cotizacion_usd_ars = Number(payload.cotizacion_usd_ars);
+      button.disabled = true;
       try {
-        await api(`/api/config/${encodeURIComponent(clienteId)}`, { method: 'PUT', body: JSON.stringify(payload) });
-        mostrarMensaje(document.getElementById('settingsMessage'), 'Configuración guardada.');
-      } catch (error) {
-        mostrarMensaje(document.getElementById('settingsMessage'), error.message, true);
-      }
+        const result = await api(`/api/config/${encodeURIComponent(clienteId)}`, { method: 'PUT', body: JSON.stringify(payload) });
+        configuracion = Array.isArray(result) ? (result[0] || payload) : (result || payload);
+        showStatus(document.getElementById('settingsMessage'), 'Configuración guardada correctamente.');
+        renderOverview();
+      } catch (error) { showStatus(document.getElementById('settingsMessage'), error.message, true); }
+      finally { button.disabled = false; }
     });
 
-    document.querySelectorAll('.upload-qr').forEach((button) => {
-      button.addEventListener('click', async () => {
-        const red = button.dataset.qr;
-        const fileInput = document.getElementById(red === 'trc20' ? 'qrTrc20File' : 'qrBep20File');
-        const file = fileInput.files[0];
-        if (!file) {
-          mostrarMensaje(document.getElementById('settingsMessage'), 'Selecciona primero una imagen QR.', true);
-          return;
-        }
-        const formData = new FormData();
-        formData.append('qr', file);
-        try {
-          const result = await api(`/api/config/${encodeURIComponent(clienteId)}/qr/${red}`, {
-            method: 'PUT',
-            body: formData,
-          });
-          document.getElementById('settingsForm').elements[`qr_${red}_url`].value = result.qr_url;
-          fileInput.value = '';
-          mostrarMensaje(document.getElementById('settingsMessage'), `QR ${red.toUpperCase()} actualizado.`);
-        } catch (error) {
-          mostrarMensaje(document.getElementById('settingsMessage'), error.message, true);
-        }
-      });
-    });
+    document.querySelectorAll('.upload-qr').forEach((button) => button.addEventListener('click', async () => {
+      const red = button.dataset.qr;
+      const fileInput = document.getElementById(red === 'trc20' ? 'qrTrc20File' : 'qrBep20File');
+      const file = fileInput.files[0];
+      if (!file) return showStatus(document.getElementById('settingsMessage'), 'Selecciona primero una imagen QR.', true);
+      const formData = new FormData();
+      formData.append('qr', file);
+      button.disabled = true;
+      try {
+        const result = await api(`/api/config/${encodeURIComponent(clienteId)}/qr/${red}`, { method: 'PUT', body: formData });
+        document.getElementById('settingsForm').elements[`qr_${red}_url`].value = result.qr_url;
+        configuracion[`qr_${red}_url`] = result.qr_url;
+        fileInput.value = '';
+        showStatus(document.getElementById('settingsMessage'), `QR ${red.toUpperCase()} actualizado.`);
+      } catch (error) { showStatus(document.getElementById('settingsMessage'), error.message, true); }
+      finally { button.disabled = false; }
+    }));
 
     document.getElementById('productForm').addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -462,72 +709,40 @@
       const payload = Object.fromEntries(new FormData(form).entries());
       payload.precio_ars = Number(payload.precio_ars);
       payload.precio_usd = Number(payload.precio_usd);
+      const button = document.getElementById('createProductButton');
+      button.disabled = true;
       try {
         await api('/api/productos', { method: 'POST', body: JSON.stringify(payload) });
         form.reset();
-        mostrarMensaje(document.getElementById('productMessage'), 'Producto creado y listo para vender.');
-        await cargarProductos();
-      } catch (error) {
-        mostrarMensaje(document.getElementById('productMessage'), error.message, true);
-      }
+        showStatus(document.getElementById('productMessage'), 'Producto publicado. Su checkout directo ya está disponible.');
+        await loadProducts();
+        renderMissions();
+      } catch (error) { showStatus(document.getElementById('productMessage'), error.message, true); }
+      finally { button.disabled = false; }
     });
 
-    document.querySelectorAll('.tab-button').forEach((button) => {
-      button.addEventListener('click', () => {
-        document.querySelectorAll('.tab-button').forEach((tab) => tab.classList.remove('tab-active'));
-        button.classList.add('tab-active');
-        document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.add('hidden'));
-        document.getElementById(`tab-${button.dataset.tab}`).classList.remove('hidden');
-      });
-    });
-    document.getElementById('transactionFilter').addEventListener('change', renderizarTransacciones);
-    document.getElementById('gatewayFilter').addEventListener('change', renderizarTransacciones);
-    document.getElementById('refreshButton').addEventListener('click', () => cargarDashboard().catch(mostrarErrorGlobal));
-    document.getElementById('logoutButton').addEventListener('click', async () => {
-      try {
-        const { error } = await supabaseClient.auth.signOut();
-        if (error) throw error;
-        mostrarLogin();
-      } catch (error) {
-        mostrarErrorGlobal(error);
-      }
-    });
-
-    async function inicializarAutenticacion() {
+    async function initialize() {
+      if (window.lucide) window.lucide.createIcons();
       try {
         const response = await fetch('/api/dashboard/public-config');
         const config = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(config.error || 'No se pudo cargar la configuración de Supabase');
-        if (!window.supabase?.createClient) throw new Error('No se pudo cargar el SDK de Supabase');
-
+        if (!response.ok) throw new Error(config.error || 'No se pudo cargar la configuración de autenticación.');
+        if (!window.supabase?.createClient) throw new Error('No se pudo cargar el SDK de Supabase.');
         supabaseClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-          auth: {
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: true,
-          },
+          auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true },
         });
-
         const { data, error } = await supabaseClient.auth.getSession();
         if (error) throw error;
-        if (data.session) mostrarDashboard(data.session);
-        else mostrarLogin();
-
+        renderAuthentication(data.session);
         supabaseClient.auth.onAuthStateChange((_event, session) => {
-          setTimeout(() => {
-            if (session) mostrarDashboard(session);
-            else {
-              clienteId = 'default';
-              mostrarLogin();
-            }
-          }, 0);
+          window.setTimeout(() => renderAuthentication(session), 0);
         });
       } catch (error) {
-        mostrarLogin(error instanceof Error ? error.message : 'No se pudo inicializar la sesión');
+        document.getElementById('loginScreen').classList.remove('hidden');
+        showLoginError(error instanceof Error ? error.message : 'No se pudo inicializar Supabase Auth.');
       }
     }
-
-    inicializarAutenticacion();
+    initialize();
   </script>
 </body>
 </html>

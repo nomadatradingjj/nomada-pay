@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Conectando checkout · Nómada Pay</title>
+</head>
+<body>
+  <p>Abriendo el checkout seguro de Nómada Pay…</p>
+  <script>
+    const checkoutParams = new URLSearchParams(window.location.search);
+    const productId = checkoutParams.get('id');
+    if (!productId) {
+      document.body.textContent = 'Este enlace de checkout no incluye un producto válido.';
+    } else {
+      const target = new URL('/prueba.html', window.location.origin);
+      target.searchParams.set('producto_id', productId);
+      for (const [key, value] of checkoutParams.entries()) {
+        if (key !== 'id') target.searchParams.set(key, value);
+      }
+      window.location.replace(target.href);
+    }
+  </script>
+</body>
+</html>

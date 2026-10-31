@@ -4,7 +4,14 @@ import { supabase } from '../config/supabase.js';
 
 export const crearCobro = async (req, res) => {
   try {
-    const { producto_id: productoId, vendedorAccessToken, comisionPorcentaje = 0.015 } = req.body;
+    const {
+      producto_id: productoId,
+      vendedorAccessToken,
+      comisionPorcentaje = 0.015,
+      return_url: returnUrl,
+      email_comprador: emailComprador,
+      plan_id: planId,
+    } = req.body;
     let { titulo, precio } = req.body;
 
     if (productoId) {
@@ -46,6 +53,7 @@ export const crearCobro = async (req, res) => {
     const baseUrl = (process.env.BASE_URL || 'https://nomada-pay.onrender.com').replace(/\/+$/, '');
     const webhookUrl = (process.env.WEBHOOK_URL || baseUrl).replace(/\/+$/, '');
     const esUrlPublica = webhookUrl.startsWith('https://');
+    const originUrl = returnUrl || req.headers.origin || req.headers.referer || 'https://www.nomadatrading-arg.com';
 
     const bodyData = {
       items: [
@@ -56,13 +64,16 @@ export const crearCobro = async (req, res) => {
           currency_id: 'ARS',
         },
       ],
+      payer: {
+        email: emailComprador,
+      },
       back_urls: {
-        success: `${baseUrl}/prueba.html?status=success`,
-        failure: `${baseUrl}/prueba.html?status=failure`,
-        pending: `${baseUrl}/prueba.html?status=pending`,
+        success: originUrl,
+        failure: originUrl,
+        pending: originUrl,
       },
       auto_return: 'approved',
-      ...(productoId && { external_reference: String(productoId) }),
+      external_reference: planId,
     };
 
     // Solo agregar notification_url si tenemos una dirección HTTPS válida
@@ -109,11 +120,9 @@ export const crearCobro = async (req, res) => {
       console.error('⚠️ Excepción al intentar guardar en Supabase:', dbError.message);
     }
 
-    return res.json({
-      status: 'success',
-      id: response.id,
+    return res.status(200).json({
       init_point: response.init_point,
-      comision_calculada: marketplaceFee
+      preference_id: response.id
     });
 
   } catch (error) {
